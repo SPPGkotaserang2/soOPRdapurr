@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Foto Absensi & Bahan Baku</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a, #0284c7, #38bdf8);
+            background-size: 400% 400%;
+            animation: gradientBG 12s ease infinite;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 420px;
+            border-top: 5px solid #0284c7;
+        }
+        .live-clock {
+            text-align: center;
+            background: linear-gradient(90deg, #dbeafe, #e0f2fe);
+            color: #0369a1;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            border: 1px solid #bae6fd;
+        }
+        .logo-container {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .logo-container img {
+            width: 100px;
+            height: auto;
+            max-width: 100%;
+            object-fit: contain;
+            border-radius: 50%;
+        }
+        .title-group {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h2 { 
+            margin: 0; 
+            line-height: 1.2; 
+        }
+        .main-title {
+            color: #1e3a8a;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+        .sub-title {
+            color: #0284c7;
+            font-size: 14px;
+            font-weight: 700;
+            margin-top: 3px;
+        }
+        .form-group { margin-bottom: 16px; }
+        label { display: block; margin-bottom: 6px; font-weight: bold; font-size: 13px; color: #1e293b; }
+        select, input[type="file"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 13px;
+            background-color: #f8fafc;
+            transition: all 0.3s;
+        }
+        select:focus, input[type="file"]:focus, input[type="password"]:focus {
+            border-color: #0284c7;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #0284c7, #2563eb);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            transition: all 0.3s;
+        }
+        button:hover { 
+            background: linear-gradient(135deg, #0369a1, #1d4ed8);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(37, 99, 235, 0.4);
+        }
+        .btn-whatsapp {
+            background: linear-gradient(135deg, #16a34a, #15803d) !important;
+            margin-top: 12px;
+            display: none;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); box-shadow: 0 0 15px rgba(22, 163, 74, 0.6); }
+            100% { transform: scale(1); }
+        }
+        .btn-whatsapp:hover {
+            background: linear-gradient(135deg, #15803d, #166534) !important;
+        }
+        #statusMessage {
+            text-align: center;
+            margin-top: 15px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .warning-box {
+            background-color: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1d4ed8;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            margin-bottom: 15px;
+            display: none;
+            font-weight: 500;
+        }
+        .admin-section {
+            margin-top: 25px;
+            border-top: 1px dashed #cbd5e1;
+            padding-top: 15px;
+            text-align: center;
+        }
+        .btn-admin {
+            background: linear-gradient(135deg, #475569, #334155);
+            font-size: 13px;
+            padding: 8px;
+            box-shadow: none;
+        }
+        .btn-admin:hover { background: linear-gradient(135deg, #334155, #1e293b); }
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            margin-top: 8px;
+            font-size: 13px;
+            padding: 8px;
+            box-shadow: none;
+        }
+        .btn-danger:hover { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <!-- Jam & Hari Live -->
+    <div id="liveClock" class="live-clock">Memuat Waktu...</div>
+
+    <!-- Logo dari File Lokal -->
+    <div class="logo-container">
+        <img src="logo.png" alt="Logo Instansi" onerror="this.style.display='none'">
+    </div>
+
+    <!-- Judul -->
+    <div class="title-group">
+        <h2 class="main-title">DOKUMENTASI</h2>
+        <h2 class="sub-title">SPPG KOTA SERANG SERANG SERANG 2</h2>
+    </div>
+    
+    <div id="warningBox" class="warning-box">
+        ⚠️ <strong>Peringatan:</strong> Ada foto yang belum lengkap di-upload dalam 24 jam terakhir![cite: 4]
+    </div>
+
+    <!-- Form menggunakan target iframe agar halaman tidak berpindah/error -->
+    <form id="uploadForm" target="hidden_iframe" method="POST">
+        <input type="hidden" name="folderId" id="folderId">
+        <input type="hidden" name="fileData" id="fileData">
+        <input type="hidden" name="fileName" id="fileName">
+        <input type="hidden" name="mimeType" id="mimeType">
+
+        <div class="form-group">
+            <label for="nama">NAMA PENGIRIM FOTO</label>
+            <select id="nama" name="nama" required onchange="updateKategoriOptions()">
+                <option value="">SIAPA YANG MAU KIRIM FOTO</option>
+                <option value="LILI">LILI</option>
+                <option value="MUAMAR">MUAMAR</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="kategori">PILIH FOTO APA YANG MAU DIKIRIM</label>
+            <select id="kategori" name="PILIH FOTO APA YANG MAU DI KIRIM" required>
+                <option value="">PILIH NAMA DULU DI ATAS SIAPA YANG MAU KIRIM</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>KIRIM FOTO PER DIVISI YA SOALNYA CUMA 1X KIIRM SEHARI PASTIKAN LANGSUNG KIRIM FOTO BANYAK:</label>
+            <input type="file" id="Foto_1" accept="image/*" required style="margin-bottom: 6px;" placeholder="Foto 1 (Wajib)">
+            <input type="file" id="Foto_2" accept="image/*" style="margin-bottom: 6px;" placeholder="Foto 2 (Opsional)">
+            <input type="file" id="Foto_3" accept="image/*" style="margin-bottom: 6px;" placeholder="Foto 3 (Opsional)">
+            <input type="file" id="Foto_4" accept="image/*" style="margin-bottom: 6px;" placeholder="Foto 4 (Opsional)">
+            <input type="file" id="Foto_5" accept="image/*" placeholder="Foto 5 (Opsional)">
+        </div>
+
+        <button type="submit" id="btnSubmit">Kirim ke Sistem</button>
+        
+        <!-- Tombol WhatsApp yang otomatis memuat teks laporan -->
+        <button type="button" id="btnWhatsApp" class="btn-whatsapp" onclick="sendToWhatsAppWithText()">💬 Klik Kirim Pesan Laporan ke WhatsApp</button>
+        
+        <div id="statusMessage"></div>
+    </form>
+
+    <!-- Menu Panel Admin (Tanpa Pop-up Bawaan Browser) -->
+    <div class="admin-section">
+        <button type="button" class="btn-admin" onclick="toggleAdminPanel()">Admin</button>
+        <div id="adminPanel" style="display: none; margin-top: 10px;">
+            <div class="form-group" style="margin-bottom: 8px;">
+                <input type="password" id="adminPasswordInput" placeholder="Masukkan Password Admin">
+            </div>
+            <button type="button" class="btn" style="background: #0284c7; font-size: 13px; padding: 8px; margin-bottom: 5px;" onclick="verifyAdminPassword()">Masuk Admin</button>
+            
+            <div id="adminMenuOptions" style="display: none; margin-top: 10px;">
+                <button type="button" class="btn-danger" onclick="resetKategoriData()">Reset Semua Kategori Hari Ini</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Iframe tersembunyi untuk menangkap proses kirim -->
+    <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;" onload="handleResponse()"></iframe>
+</div>
+
+<script>
+    // Fungsi untuk menampilkan Jam & Hari Live
+    function updateClock() {
+        const now = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const tanggalStr = now.toLocaleDateString('id-ID', options);
+        const jamStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        document.getElementById('liveClock').innerHTML = `📅 ${tanggalStr} | ⏰ ${jamStr} WIB`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // ===================================================
+    // MASUKKAN KONFIGURASI ANDA DI SINI
+    // ===================================================
+    const ID_FOLDER_ABSENSI = "1egZm6HVSS8k9h3XG-uqKTnxdCu9_Jqp5";
+    const ID_FOLDER_BAHAN_BAKU = "1NVVeIFqZUcMUu8l9_NYPIeV4LQk9qIig";
+    const ID_FOLDER_LAINNYA = "MASUKKAN_ID_FOLDER_KETIGA_DISINI"; 
+
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzx4oIIeK7qbfl3mqb_0LpDcgmxC_-skB1XFTwOUwezaIsmDxi0NBfYa8GsXw1_kKKwyQ/exec";
+    
+    // Masukkan Nomor WhatsApp Tujuan (Awali dengan kode negara 62, contoh: 6283111399112)
+    const WHATSAPP_NUMBER = "6283111399112"; 
+    // ===================================================
+
+    const ALL_CATEGORIES = [
+        "Absensi", "Terima_Bahan_Baku", "Kategori_03", "Kategori_04", "Kategori_05",
+        "Kategori_06", "Kategori_07", "Kategori_08", "Kategori_09", "Kategori_10",
+        "Kategori_11", "Kategori_12", "Kategori_13", "Kategori_14", "Kategori_15",
+        "Kategori_16", "Kategori_17", "Kategori_18", "Kategori_19", "Kategori_20",
+        "Kategori_21", "Kategori_22", "Kategori_23", "Kategori_24", "Kategori_25",
+        "Kategori_26", "Kategori_27", "Kategori_28", "Kategori_29", "Kategori_30"
+    ];
+
+    const form = document.getElementById('uploadForm');
+    form.action = WEB_APP_URL;
+
+    let queueFiles = [];
+    let currentQueueIndex = 0;
+    let activeNama = "";
+    let activeKategori = "";
+    let targetFolderId = "";
+    let totalUploadedCount = 0;
+
+    function updateKategoriOptions() {
+        const nama = document.getElementById('nama').value;
+        const selectKategori = document.getElementById('kategori');
+        const warningBox = document.getElementById('warningBox');
+        
+        selectKategori.innerHTML = '<option value="">-- Pilih Kategori --</option>';
+
+        if (!nama) {
+            warningBox.style.display = 'none';
+            return;
+        }
+
+        const now = new Date().getTime();
+        const twentyFourHours = 24 * 60 * 60 * 1000;
+        let historyData = JSON.parse(localStorage.getItem('upload_history_' + nama)) || {};
+
+        let hasUnuploadedCategories = false;
+
+        ALL_CATEGORIES.forEach(kat => {
+            let lastUploadTime = historyData[kat];
+            let isExpired = !lastUploadTime || (now - lastUploadTime > twentyFourHours);
+
+            if (isExpired) {
+                let option = document.createElement('option');
+                option.value = kat;
+                option.textContent = kat.replace(/_/g, ' ');
+                selectKategori.appendChild(option);
+                hasUnuploadedCategories = true;
+            }
+        });
+
+        if (hasUnuploadedCategories) {
+            warningBox.style.display = 'block';
+        } else {
+            warningBox.style.display = 'none';
+        }
+    }
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        activeNama = document.getElementById('nama').value;
+        activeKategori = document.getElementById('kategori').value;
+
+        queueFiles = [];
+        for (let i = 1; i <= 5; i++) {
+            let fileInput = document.getElementById('Foto_' + i);
+            if (fileInput && fileInput.files[0]) {
+                queueFiles.push(fileInput.files[0]);
+            }
+        }
+
+        if (queueFiles.length === 0) {
+            alert("Pilih minimal 1 foto terlebih dahulu!");
+            return;
+        }
+
+        totalUploadedCount = queueFiles.length;
+
+        targetFolderId = ID_FOLDER_ABSENSI;
+        if (activeKategori === "Absensi") {
+            targetFolderId = ID_FOLDER_ABSENSI;
+        } else if (activeKategori === "Terima_Bahan_Baku") {
+            targetFolderId = ID_FOLDER_BAHAN_BAKU;
+        } else {
+            targetFolderId = ID_FOLDER_LAINNYA;
+        }
+
+        document.getElementById('btnSubmit').disabled = true;
+        document.getElementById('btnWhatsApp').style.display = 'none';
+        document.getElementById('btnSubmit').innerText = "Mengunggah (0/" + queueFiles.length + ")...";
+        document.getElementById('statusMessage').innerText = "";
+
+        currentQueueIndex = 0;
+        uploadNextQueueFile();
+    });
+
+    function uploadNextQueueFile() {
+        if (currentQueueIndex >= queueFiles.length) {
+            const now = new Date().getTime();
+            let historyData = JSON.parse(localStorage.getItem('upload_history_' + activeNama)) || {};
+            historyData[activeKategori] = now;
+            localStorage.setItem('upload_history_' + activeNama, JSON.stringify(historyData));
+
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.style.color = "#16a34a";
+            statusDiv.innerText = `Sukses! ${totalUploadedCount} foto berhasil dikirim ke sistem.`;
+            
+            form.reset();
+            
+            const btn = document.getElementById('btnSubmit');
+            btn.disabled = false;
+            btn.innerText = "Kirim ke Sistem";
+
+            // Munculkan tombol WhatsApp yang sudah berisi teks laporan lengkap
+            document.getElementById('btnWhatsApp').style.display = 'block';
+
+            updateKategoriOptions();
+            return;
+        }
+
+        let file = queueFiles[currentQueueIndex];
+        document.getElementById('statusMessage').style.color = "#0284c7";
+        document.getElementById('statusMessage').innerText = `Mengunggah foto ${currentQueueIndex + 1} dari ${queueFiles.length}...`;
+
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = function () {
+            document.getElementById('folderId').value = targetFolderId;
+            document.getElementById('fileData').value = reader.result;
+            document.getElementById('fileName').value = `${activeNama}_${activeKategori}_${file.name}`;
+            document.getElementById('mimeType').value = file.type;
+
+            isSubmitted = true;
+            form.submit();
+        };
+    }
+
+    function handleResponse() {
+        if (isSubmitted) {
+            isSubmitted = false;
+            currentQueueIndex++;
+            if (currentQueueIndex < queueFiles.length) {
+                setTimeout(uploadNextQueueFile, 1000);
+            } else {
+                uploadNextQueueFile();
+            }
+        }
+    }
+
+    // Fungsi untuk membuat dan membuka WhatsApp dengan teks laporan otomatis
+    function sendToWhatsAppWithText() {
+        const formattedKategori = activeKategori.replace(/_/g, ' ');
+        const currentTime = new Date().toLocaleString('id-ID');
+        
+        const message = `*LAPORAN DOKUMENTASI SPPG KOTA SERANG 2*\n\n` +
+                        `👤 *Pengirim:* ${activeNama}\n` +
+                        `📂 *Kategori:* ${formattedKategori}\n` +
+                        `📸 *Jumlah Foto:* ${totalUploadedCount} Foto\n` +
+                        `⏰ *Waktu:* ${currentTime} WIB\n\n` +
+                        `✅ Status: Foto telah berhasil di-upload ke sistem.`;
+
+        const encodedMessage = encodeURIComponent(message);
+        const whatsappURL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
+        
+        window.open(whatsappURL, '_blank');
+    }
+
+    // Fungsi Panel Admin Tanpa Pop-up Bawaan Browser
+    function toggleAdminPanel() {
+        const panel = document.getElementById('adminPanel');
+        if (panel.style.display === "none") {
+            panel.style.display = "block";
+        } else {
+            panel.style.display = "none";
+            document.getElementById('adminMenuOptions').style.display = "none";
+            document.getElementById('adminPasswordInput').value = "";
+        }
+    }
+
+    function verifyAdminPassword() {
+        const pass = document.getElementById('adminPasswordInput').value;
+        if (pass === "Mandiri02srg") {
+            document.getElementById('adminMenuOptions').style.display = "block";
+            alert("Password benar! Menu admin ditampilkan.");
+        } else {
+            alert("Password salah!");
+            document.getElementById('adminMenuOptions').style.display = "none";
+        }
+    }
+
+    function resetKategoriData() {
+        if (confirm("Yakin ingin mereset seluruh riwayat kategori agar muncul kembali?")) {
+            localStorage.clear();
+            alert("Berhasil! Semua kategori telah di-reset dan dapat dipilih kembali.");
+            location.reload();
+        }
+    }
+</script>
+
+</body>
+</html>
