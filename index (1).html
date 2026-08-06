@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Foto Absensi & Bahan Baku</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a, #0284c7, #38bdf8);
+            background-size: 400% 400%;
+            animation: gradientBG 12s ease infinite;
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(10px);
+            padding: 20px 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 480px;
+            border-top: 4px solid #0284c7;
+        }
+        .live-clock {
+            text-align: center;
+            background: #f0f9ff;
+            color: #0369a1;
+            padding: 6px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            border: 1px solid #bae6fd;
+        }
+        .logo-container {
+            text-align: center;
+            margin-bottom: 6px;
+        }
+        .logo-container img {
+            width: 90px;
+            height: auto;
+            max-width: 100%;
+            object-fit: contain;
+            border-radius: 50%;
+        }
+        .title-group {
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        h2 { margin: 0; line-height: 1.2; }
+        .main-title {
+            color: #1e3a8a;
+            font-size: 17px;
+            font-weight: 800;
+        }
+        .sub-title {
+            color: #0284c7;
+            font-size: 12px;
+            font-weight: 700;
+            margin-top: 2px;
+        }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 4px; font-weight: bold; font-size: 12px; color: #1e293b; }
+        
+        .checkbox-group {
+            display: flex;
+            gap: 15px;
+            background: #f8fafc;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: bold;
+            color: #0f172a;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .category-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 320px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        .category-card {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 10px 12px;
+            transition: all 0.2s;
+        }
+        .category-card:hover {
+            border-color: #0284c7;
+            background: #f0f9ff;
+        }
+        .category-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 6px;
+        }
+        input[type="file"], input[type="password"] {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 12px;
+            background-color: #fff;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(135deg, #0284c7, #2563eb);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(37, 99, 235, 0.3);
+            transition: all 0.3s;
+        }
+        button:hover { 
+            background: linear-gradient(135deg, #0369a1, #1d4ed8);
+        }
+        #statusMessage {
+            text-align: center;
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .warning-box {
+            background-color: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1d4ed8;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+        /* Style untuk Live Update Feed */
+        .live-feed-box {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 15px;
+            font-size: 11px;
+        }
+        .live-feed-title {
+            font-weight: bold;
+            color: #1e3a8a;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .live-feed-list {
+            max-height: 100px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .feed-item {
+            background: #fff;
+            padding: 5px 8px;
+            border-radius: 4px;
+            border-left: 3px solid #0284c7;
+            color: #334155;
+        }
+
+        .admin-section {
+            margin-top: 15px;
+            border-top: 1px dashed #cbd5e1;
+            padding-top: 10px;
+            text-align: center;
+        }
+        .btn-admin {
+            background: #475569;
+            font-size: 12px;
+            padding: 6px;
+            box-shadow: none;
+            width: auto;
+            display: inline-block;
+            padding-inline: 15px;
+            border-radius: 4px;
+        }
+        .btn-admin:hover { background: #334155; }
+        .btn-danger {
+            background: #ef4444;
+            margin-top: 6px;
+            font-size: 12px;
+            padding: 6px;
+            box-shadow: none;
+        }
+        .btn-danger:hover { background: #dc2626; }
+        .admin-checkbox-list {
+            max-height: 150px;
+            overflow-y: auto;
+            text-align: left;
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            padding: 8px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div id="liveClock" class="live-clock">Memuat Waktu...</div>
+
+    <div class="logo-container">
+        <img src="logo.png" alt="Logo Instansi" onerror="this.style.display='none'">
+    </div>
+
+    <div class="title-group">
+        <h2 class="main-title">DOKUMENTASI</h2>
+        <h2 class="sub-title">SPPG KOTA SERANG SERANG SERANG 2</h2>
+    </div>
+    
+    <div class="warning-box">
+        ⚠️ <strong>PENGUMUMAN :</strong> FOTO WAJIB DIKIRIM SETIAP HARI
+    </div>
+
+    <form id="uploadForm" target="hidden_iframe" method="POST">
+        <input type="hidden" name="folderId" id="folderId">
+        <input type="hidden" name="fileData" id="fileData">
+        <input type="hidden" name="fileName" id="fileName">
+        <input type="hidden" name="mimeType" id="mimeType">
+
+        <div class="form-group">
+            <label>NAMA PENGIRIM</label>
+            <div class="checkbox-group">
+                <label class="checkbox-label"><input type="checkbox" name="nama" value="LILI" onclick="handleNamaChange(this)"> LILI</label>
+                <label class="checkbox-label"><input type="checkbox" name="nama" value="MUAMAR" onclick="handleNamaChange(this)"> MUAMAR</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>PILIH KATEGORI & UNGGAH FOTO (Bisa Lebih Dari 1 Foto)</label>
+            <div id="categoryContainer" class="category-container"></div>
+        </div>
+
+        <button type="submit" id="btnSubmit">Kirim Laporan</button>
+        <div id="statusMessage"></div>
+    </form>
+
+    <!-- Panel Live Update Aktivitas Upload -->
+    <div class="live-feed-box">
+        <div class="live-feed-title">📡 Live Update Aktivitas Upload Hari Ini</div>
+        <div id="liveFeedList" class="live-feed-list">
+            <div style="color: #64748b; text-align: center; padding: 4px;">Belum ada aktivitas upload baru.</div>
+        </div>
+    </div>
+
+    <div class="admin-section">
+        <button type="button" class="btn-admin" onclick="toggleAdminPanel()">Admin Panel</button>
+        <div id="adminPanel" style="display: none; margin-top: 8px;">
+            <div class="form-group" style="margin-bottom: 6px;">
+                <input type="password" id="adminPasswordInput" placeholder="Password Admin">
+            </div>
+            <button type="button" class="btn" style="background: #0284c7; font-size: 12px; padding: 6px;" onclick="verifyAdminPassword()">Masuk</button>
+            
+            <div id="adminMenuOptions" style="display: none; margin-top: 8px;">
+                <label style="font-size: 11px; margin-bottom: 4px; text-align: left;">Pilih Kategori yang Ingin Direset:</label>
+                <div id="adminResetCheckboxContainer" class="admin-checkbox-list"></div>
+                <button type="button" class="btn-danger" onclick="resetSelectedCategoriesData()">Reset Kategori Terpilih</button>
+            </div>
+        </div>
+    </div>
+
+    <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;" onload="handleResponse()"></iframe>
+</div>
+
+<script>
+    function updateClock() {
+        const now = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+        const tanggalStr = now.toLocaleDateString('id-ID', options);
+        const jamStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        document.getElementById('liveClock').innerHTML = `📅 ${tanggalStr} | ⏰ ${jamStr}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    const FOLDER_MAPPING = {
+        "FOTO ABSENSI RELAWAN": "1egZm6HVSS8k9h3XG-uqKTnxdCu9_Jqp5",
+        "FOTO BAHAN BAKU": "1NVVeIFqZUcMUu8l9_NYPIeV4LQk9qIig",
+        "FOTO BAHAN BAKU RIJECK": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO CLEANING SERVICE": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO DAPUR": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO DISTRIBUSI PENGIRIMAN": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO DITRIBUSI SEKOLAH (ADMIN)": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO GALON DAN GAS": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO KENDARAAN": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO KERJA BAKTI DAPUR": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO LIMBAH B3": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO SISA PEMORSIAN": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO SISA FOODTRAY": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO ANGKUT LIMBAH": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO SERAH TERIMA SCURITY": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO SERAH TERIMA PERSIAPAN KE PENGOLAHAN": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO SERAH TERIMA PENGOLAHAN KE PEMORSIAN": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO SERAH TERIMA PEMORSIAN KE DISTRIBUSI": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO SERAH TERIMA DISTRIBUSI KE TIM FOODTRAY": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO SERAH TERIMA FOODTRAY KE ASLAP": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO TERIMA BAHAN BAKU": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO TIM PERSIAPAN": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO TIM PENGOLAHAN": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO TIM PEMORSIAN": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO TIM FOODTRAY": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO SAAT SO BAHAN BAKU": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO PERBAIKAN DI DAPUR (JIKA ADA)": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO SAAT CUCI KENDARAAN": "MASUKKAN_ID_FOLDER_DISINI",
+        "FOTO SAAT MEMBERSIHAKN IPAL": "MASUKKAN_ID_FOLDER_DISINI"
+    };
+
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyPUeCoYQIFfyQQRhMumqsyuvKySj5qN__qPdBBoQN1Jcf3YAsoYqRHkUjOUFhh97llyw/exec";
+    const FONNTE_TOKEN = "2fdkH58gi34zWzEawaZN"; 
+    const FONNTE_TARGET = "6283111399112";                  
+
+    const ALL_CATEGORIES = Object.keys(FOLDER_MAPPING);
+    const form = document.getElementById('uploadForm');
+    form.action = WEB_APP_URL;
+
+    let queueFiles = [];
+    let currentQueueIndex = 0;
+    let activeNama = "";
+    let activeKategori = "";
+    let targetFolderId = "";
+    let totalUploadedCount = 0;
+    let categoryDetailsList = []; 
+    let isSubmitted = false;
+
+    function getGlobalHistory() {
+        return JSON.parse(localStorage.getItem('sppg_global_upload_history')) || {};
+    }
+
+    function saveGlobalHistory(history) {
+        localStorage.setItem('sppg_global_upload_history', JSON.stringify(history));
+    }
+
+    function handleNamaChange(checkbox) {
+        const checkboxes = document.querySelectorAll('input[name="nama"]');
+        checkboxes.forEach(item => {
+            if (item !== checkbox) item.checked = false;
+        });
+        renderCategories();
+    }
+
+    function renderCategories() {
+        const container = document.getElementById('categoryContainer');
+        container.innerHTML = '';
+
+        const selectedNamaEl = document.querySelector('input[name="nama"]:checked');
+        if (!selectedNamaEl) {
+            container.innerHTML = '<div style="font-size:12px; color:#64748b; text-align:center; padding:15px;">Pilih Nama Pengirim terlebih dahulu di atas</div>';
+            return;
+        }
+
+        const now = new Date().getTime();
+        const twentyFourHours = 24 * 60 * 60 * 1000;
+        let globalHistory = getGlobalHistory();
+
+        ALL_CATEGORIES.forEach((kat, index) => {
+            let record = globalHistory[kat];
+            let isExpired = true;
+            let uploadedByText = "";
+
+            if (record && (now - record.time <= twentyFourHours)) {
+                isExpired = false;
+                uploadedByText = ` (SUDAH DIKIRIM oleh ${record.sender})`;
+            }
+
+            let card = document.createElement('div');
+            card.className = 'category-card';
+
+            if (!isExpired) {
+                card.innerHTML = `
+                    <div class="category-title" style="color: #16a34a;">✅ ${kat}${uploadedByText}</div>
+                `;
+            } else {
+                card.innerHTML = `
+                    <div class="category-title">${kat}</div>
+                    <label style="font-size: 11px; color: #475569; margin-bottom: 2px;">Unggah Foto (Bisa pilih banyak):</label>
+                    <input type="file" name="cat_files_${index}" data-category="${kat}" accept="image/*" multiple onchange="compressImages(this)">
+                `;
+            }
+            container.appendChild(card);
+        });
+        
+        renderLiveFeed();
+    }
+
+    // Fungsi untuk memperbarui tampilan Live Feed Aktivitas Upload
+    function renderLiveFeed() {
+        const feedList = document.getElementById('liveFeedList');
+        let globalHistory = getGlobalHistory();
+        const now = new Date().getTime();
+        const twentyFourHours = 24 * 60 * 60 * 1000;
+
+        let activeEntries = [];
+        for (let kat in globalHistory) {
+            let record = globalHistory[kat];
+            if (record && (now - record.time <= twentyFourHours)) {
+                activeEntries.push({
+                    category: kat,
+                    sender: record.sender,
+                    time: record.time
+                });
+            }
+        }
+
+        // Urutkan dari yang paling baru diunggah
+        activeEntries.sort((a, b) => b.time - a.time);
+
+        if (activeEntries.length === 0) {
+            feedList.innerHTML = '<div style="color: #64748b; text-align: center; padding: 4px;">Belum ada aktivitas upload baru.</div>';
+            return;
+        }
+
+        feedList.innerHTML = '';
+        activeEntries.forEach(item => {
+            let dateObj = new Date(item.time);
+            let timeString = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            
+            let feedItem = document.createElement('div');
+            feedItem.className = 'feed-item';
+            feedItem.innerHTML = `<b>${item.sender}</b> mengunggah <b>${item.category}</b> <span style="float: right; color: #64748b; font-size: 10px;">🕒 ${timeString}</span>`;
+            feedList.appendChild(feedItem);
+        });
+    }
+
+    function compressImages(input) {
+        if (!input.files || input.files.length === 0) return;
+        const files = Array.from(input.files);
+        let compressedFiles = [];
+
+        let count = 0;
+        files.forEach((file, idx) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    const MAX_WIDTH = 1200;
+                    const MAX_HEIGHT = 1200;
+                    if (width > height) {
+                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                    } else {
+                        if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    canvas.toBlob(function(blob) {
+                        const compressedFile = new File([blob], file.name, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+                        
+                        compressedFiles[idx] = compressedFile;
+                        count++;
+
+                        if (count === files.length) {
+                            const dataTransfer = new DataTransfer();
+                            compressedFiles.forEach(f => dataTransfer.items.add(f));
+                            input.files = dataTransfer.files;
+                        }
+                    }, 'image/jpeg', 0.7);
+                };
+            };
+        });
+    }
+
+    renderCategories();
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const selectedNamaEl = document.querySelector('input[name="nama"]:checked');
+        if (!selectedNamaEl) {
+            alert("Silakan pilih Nama Pengirim terlebih dahulu!");
+            return;
+        }
+        activeNama = selectedNamaEl.value;
+
+        queueFiles = [];
+        categoryDetailsList = [];
+        const fileInputs = document.querySelectorAll('input[type="file"][name^="cat_files_"]');
+        
+        fileInputs.forEach(input => {
+            if (input.files && input.files.length > 0) {
+                const categoryName = input.getAttribute('data-category');
+                const fileCount = input.files.length;
+                
+                categoryDetailsList.push({
+                    category: categoryName,
+                    count: fileCount
+                });
+
+                for (let i = 0; i < fileCount; i++) {
+                    queueFiles.push({
+                        file: input.files[i],
+                        category: categoryName
+                    });
+                }
+            }
+        });
+
+        if (queueFiles.length === 0) {
+            alert("Pilih minimal 1 foto pada salah satu kategori!");
+            return;
+        }
+
+        totalUploadedCount = queueFiles.length;
+        document.getElementById('btnSubmit').disabled = true;
+        document.getElementById('btnSubmit').innerText = `Mengunggah (0/${queueFiles.length})...`;
+        document.getElementById('statusMessage').innerText = "";
+
+        currentQueueIndex = 0;
+        uploadNextQueueFile();
+    });
+
+    function uploadNextQueueFile() {
+        if (currentQueueIndex >= queueFiles.length) {
+            const now = new Date().getTime();
+            let globalHistory = getGlobalHistory();
+            
+            categoryDetailsList.forEach(item => {
+                globalHistory[item.category] = {
+                    time: now,
+                    sender: activeNama
+                };
+            });
+            saveGlobalHistory(globalHistory);
+
+            sendToFonnteWhatsAppAuto();
+            return;
+        }
+
+        let currentItem = queueFiles[currentQueueIndex];
+        activeKategori = currentItem.category;
+        targetFolderId = FOLDER_MAPPING[activeKategori] || "1egZm6HVSS8k9h3XG-uqKTnxdCu9_Jqp5";
+
+        document.getElementById('statusMessage').style.color = "#0284c7";
+        document.getElementById('statusMessage').innerText = `Mengunggah foto ${currentQueueIndex + 1} dari ${queueFiles.length}...`;
+
+        const reader = new FileReader();
+        reader.readAsDataURL(currentItem.file);
+        reader.onload = function () {
+            document.getElementById('folderId').value = targetFolderId;
+            document.getElementById('fileData').value = reader.result;
+            // PERUBAHAN: Nama file di Drive hanya menggunakan Kategori dan Nama File Asli
+            document.getElementById('fileName').value = `${activeKategori}_${currentItem.file.name}`;
+            document.getElementById('mimeType').value = currentItem.file.type;
+
+            isSubmitted = true;
+            form.submit();
+        };
+    }
+
+    function handleResponse() {
+        if (isSubmitted) {
+            isSubmitted = false;
+            currentQueueIndex++;
+            if (currentQueueIndex < queueFiles.length) {
+                setTimeout(uploadNextQueueFile, 1000);
+            } else {
+                uploadNextQueueFile();
+            }
+        }
+    }
+
+    function sendToFonnteWhatsAppAuto() {
+        document.getElementById('statusMessage').style.color = "#0284c7";
+        document.getElementById('statusMessage').innerText = "Mengirim ke WhatsApp...";
+
+        const currentTime = new Date().toLocaleString('id-ID');
+        let formattedDetails = categoryDetailsList.map(item => `  • ${item.category} (${item.count} Foto)`).join('\n');
+
+        const message = `*LAPORAN DOKUMENTASI SPPG KOTA SERANG SERANG SERANG 2*\n\n` +
+                        `👤 *Pengirim:* ${activeNama}\n` +
+                        `📂 *Rincian Kategori & Jumlah Foto:*\n${formattedDetails}\n\n` +
+                        `📸 *Total Keseluruhan:* ${totalUploadedCount} Foto\n` +
+                        `⏰ *Waktu:* ${currentTime} WIB\n\n` +
+                        `✅ Status: Foto telah berhasil di-upload ke sistem.`;
+
+        fetch('https://api.fonnte.com/send', {
+            method: 'POST',
+            headers: { 'Authorization': FONNTE_TOKEN },
+            body: new URLSearchParams({
+                'target': FONNTE_TARGET,
+                'message': message,
+                'countryCode': '62'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            finalizeSuccess();
+        })
+        .catch(error => {
+            finalizeSuccess();
+        });
+    }
+
+    function finalizeSuccess() {
+        form.reset();
+        const btn = document.getElementById('btnSubmit');
+        btn.disabled = false;
+        btn.innerText = "Kirim Laporan";
+
+        const statusDiv = document.getElementById('statusMessage');
+        statusDiv.style.color = "#16a34a";
+        statusDiv.innerText = "BERHASIL DI KIRIM";
+
+        renderCategories();
+    }
+
+    function toggleAdminPanel() {
+        const panel = document.getElementById('adminPanel');
+        panel.style.display = panel.style.display === "none" ? "block" : "none";
+    }
+
+    function verifyAdminPassword() {
+        const pass = document.getElementById('adminPasswordInput').value;
+        if (pass === "Mandiri02srg") {
+            document.getElementById('adminMenuOptions').style.display = "block";
+            renderAdminResetCheckboxes();
+            alert("Password benar!");
+        } else {
+            alert("Password salah!");
+            document.getElementById('adminMenuOptions').style.display = "none";
+        }
+    }
+
+    function renderAdminResetCheckboxes() {
+        const container = document.getElementById('adminResetCheckboxContainer');
+        container.innerHTML = '';
+        let globalHistory = getGlobalHistory();
+
+        ALL_CATEGORIES.forEach(kat => {
+            let record = globalHistory[kat];
+            let labelText = kat;
+            if (record) {
+                labelText += ` (Terkirim: ${record.sender})`;
+            }
+
+            let div = document.createElement('div');
+            div.style.marginBottom = "4px";
+            div.innerHTML = `
+                <label style="font-weight: normal; font-size: 11px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <input type="checkbox" name="reset_cat" value="${kat}"> ${labelText}
+                </label>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function resetSelectedCategoriesData() {
+        const checkedBoxes = document.querySelectorAll('input[name="reset_cat"]:checked');
+        if (checkedBoxes.length === 0) {
+            alert("Pilih minimal satu kategori yang ingin direset!");
+            return;
+        }
+
+        if (confirm(`Yakin ingin mereset ${checkedBoxes.length} kategori yang dipilih?`)) {
+            let globalHistory = getGlobalHistory();
+            checkedBoxes.forEach(box => {
+                delete globalHistory[box.value];
+            });
+            saveGlobalHistory(globalHistory);
+            alert("Kategori terpilih berhasil di-reset!");
+            renderAdminResetCheckboxes();
+            renderCategories();
+        }
+    }
+</script>
+
+</body>
+</html>
