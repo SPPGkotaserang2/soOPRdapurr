@@ -158,6 +158,38 @@
             margin-bottom: 12px;
             font-weight: 500;
         }
+        /* Style untuk Live Update Feed */
+        .live-feed-box {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 15px;
+            font-size: 11px;
+        }
+        .live-feed-title {
+            font-weight: bold;
+            color: #1e3a8a;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .live-feed-list {
+            max-height: 100px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .feed-item {
+            background: #fff;
+            padding: 5px 8px;
+            border-radius: 4px;
+            border-left: 3px solid #0284c7;
+            color: #334155;
+        }
+
         .admin-section {
             margin-top: 15px;
             border-top: 1px dashed #cbd5e1;
@@ -237,6 +269,14 @@
         <div id="statusMessage"></div>
     </form>
 
+    <!-- Panel Live Update Aktivitas Upload -->
+    <div class="live-feed-box">
+        <div class="live-feed-title">📡 Live Update Aktivitas Upload Hari Ini</div>
+        <div id="liveFeedList" class="live-feed-list">
+            <div style="color: #64748b; text-align: center; padding: 4px;">Belum ada aktivitas upload baru.</div>
+        </div>
+    </div>
+
     <div class="admin-section">
         <button type="button" class="btn-admin" onclick="toggleAdminPanel()">Admin Panel</button>
         <div id="adminPanel" style="display: none; margin-top: 8px;">
@@ -299,7 +339,7 @@
         "FOTO SAAT MEMBERSIHAKN IPAL": "MASUKKAN_ID_FOLDER_DISINI"
     };
 
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzx4oIIeK7qbfl3mqb_0LpDcgmxC_-skB1XFTwOUwezaIsmDxi0NBfYa8GsXw1_kKKwyQ/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyPUeCoYQIFfyQQRhMumqsyuvKySj5qN__qPdBBoQN1Jcf3YAsoYqRHkUjOUFhh97llyw/exec";
     const FONNTE_TOKEN = "2fdkH58gi34zWzEawaZN"; 
     const FONNTE_TARGET = "6283111399112";                  
 
@@ -316,8 +356,6 @@
     let categoryDetailsList = []; 
     let isSubmitted = false;
 
-    // Fungsi untuk mendapatkan data universal dari localStorage agar sinkron antar HP/browser di perangkat yang sama 
-    // (Untuk sinkron lintas perangkat yang berbeda secara online murni, Anda perlu menghubungkan database Cloud/Google Sheets. Namun menggunakan localStorage bersama sistem shared key ini aman untuk domain hosting yang sama).
     function getGlobalHistory() {
         return JSON.parse(localStorage.getItem('sppg_global_upload_history')) || {};
     }
@@ -334,7 +372,7 @@
         renderCategories();
     }
 
-  function renderCategories() {
+    function renderCategories() {
         const container = document.getElementById('categoryContainer');
         container.innerHTML = '';
 
@@ -374,9 +412,49 @@
             }
             container.appendChild(card);
         });
+        
+        renderLiveFeed();
     }
 
-    // Fungsi tambahan khusus untuk mengecilkan ukuran foto dari HP agar mulus masuk ke Google Drive
+    // Fungsi untuk memperbarui tampilan Live Feed Aktivitas Upload
+    function renderLiveFeed() {
+        const feedList = document.getElementById('liveFeedList');
+        let globalHistory = getGlobalHistory();
+        const now = new Date().getTime();
+        const twentyFourHours = 24 * 60 * 60 * 1000;
+
+        let activeEntries = [];
+        for (let kat in globalHistory) {
+            let record = globalHistory[kat];
+            if (record && (now - record.time <= twentyFourHours)) {
+                activeEntries.push({
+                    category: kat,
+                    sender: record.sender,
+                    time: record.time
+                });
+            }
+        }
+
+        // Urutkan dari yang paling baru diunggah
+        activeEntries.sort((a, b) => b.time - a.time);
+
+        if (activeEntries.length === 0) {
+            feedList.innerHTML = '<div style="color: #64748b; text-align: center; padding: 4px;">Belum ada aktivitas upload baru.</div>';
+            return;
+        }
+
+        feedList.innerHTML = '';
+        activeEntries.forEach(item => {
+            let dateObj = new Date(item.time);
+            let timeString = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            
+            let feedItem = document.createElement('div');
+            feedItem.className = 'feed-item';
+            feedItem.innerHTML = `<b>${item.sender}</b> mengunggah <b>${item.category}</b> <span style="float: right; color: #64748b; font-size: 10px;">🕒 ${timeString}</span>`;
+            feedList.appendChild(feedItem);
+        });
+    }
+
     function compressImages(input) {
         if (!input.files || input.files.length === 0) return;
         const files = Array.from(input.files);
@@ -426,7 +504,6 @@
             };
         });
     }
-
 
     renderCategories();
 
@@ -506,7 +583,8 @@
         reader.onload = function () {
             document.getElementById('folderId').value = targetFolderId;
             document.getElementById('fileData').value = reader.result;
-            document.getElementById('fileName').value = `${activeNama}_${activeKategori}_${currentItem.file.name}`;
+            // PERUBAHAN: Nama file di Drive hanya menggunakan Kategori dan Nama File Asli
+            document.getElementById('fileName').value = `${activeKategori}_${currentItem.file.name}`;
             document.getElementById('mimeType').value = currentItem.file.type;
 
             isSubmitted = true;
