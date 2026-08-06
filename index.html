@@ -147,7 +147,6 @@
             border-radius: 8px;
             font-size: 12px;
             margin-bottom: 15px;
-            display: none;
             font-weight: 500;
         }
         .admin-section {
@@ -190,23 +189,18 @@
         <h2 class="sub-title">SPPG KOTA SERANG SERANG SERANG 2</h2>
     </div>
 
-    <!-- Tombol Refresh / Sinkronisasi Data Antar HP -->
-    <button type="button" class="btn-refresh" onclick="syncAndRefreshData()">🔄 Refresh & Sinkronkan Data</button>
+    <!-- Tombol Refresh / Sinkronisasi Publik Antar HP -->
+    <button type="button" class="btn-refresh" onclick="fetchServerStatus()">🔄 Refresh & Sinkronkan Data Publik</button>
     
     <div id="warningBox" class="warning-box">
-        ⚠️ <strong>PENGUMUMAN :</strong> FOTO WAJIB HARUS DI KIRIM SETIAP HARI
+        ⚠️ <strong>PENGUMUMAN :</strong> FOTO WAJIB HARUS DI KIRIM SETIAP HARI. Ceklis (✅) menandakan kategori sudah di-upload hari ini oleh tim.
     </div>
 
-    <!-- Form menggunakan target iframe agar halaman tidak berpindah/error -->
-    <form id="uploadForm" target="hidden_iframe" method="POST">
-        <input type="hidden" name="folderId" id="folderId">
-        <input type="hidden" name="fileData" id="fileData">
-        <input type="hidden" name="fileName" id="fileName">
-        <input type="hidden" name="mimeType" id="mimeType">
-
+    <!-- Form Upload -->
+    <form id="uploadForm">
         <div class="form-group">
             <label for="nama">NAMA PENGIRIM FOTO</label>
-            <select id="nama" name="nama" required onchange="updateKategoriOptions()">
+            <select id="nama" name="nama" required onchange="renderKategoriDropdown()">
                 <option value="">SIAPA YANG MAU KIRIM FOTO</option>
                 <option value="LILI">LILI</option>
                 <option value="MUAMAR">MUAMAR</option>
@@ -215,29 +209,27 @@
 
         <div class="form-group">
             <label for="kategori">PILIH FOTO APA YANG MAU DIKIRIM</label>
-            <select id="kategori" name="PILIH FOTO APA YANG MAU DI KIRIM" required>
-                <option value="">PILIH NAMA DULU DI ATAS SIAPA YANG MAU KIRIM</option>
+            <select id="kategori" name="kategori" required>
+                <option value="">-- Pilih Kategori --</option>
             </select>
         </div>
 
         <div class="form-group">
-            <label>KIRIM FOTO PER DIVISI YA SOALNYA CUMA 1X KIIRM SEHARI PASTIKAN LANGSUNG KIRIM FOTO BANYAK:</label>
-            <input type="file" id="Foto_1" accept="image/*" required style="margin-bottom: 6px;" placeholder="Foto 1 (Wajib)">
-            <input type="file" id="Foto_2" accept="image/*" style="margin-bottom: 6px;" placeholder="Foto 2 (Opsional)">
-            <input type="file" id="Foto_3" accept="image/*" style="margin-bottom: 6px;" placeholder="Foto 3 (Opsional)">
-            <input type="file" id="Foto_4" accept="image/*" style="margin-bottom: 6px;" placeholder="Foto 4 (Opsional)">
-            <input type="file" id="Foto_5" accept="image/*" placeholder="Foto 5 (Opsional)">
+            <label>KIRIM FOTO PER DIVISI (BISA PILIH BANYAK FOTO SEKALIGUS):</label>
+            <input type="file" id="Foto_1" accept="image/*" required style="margin-bottom: 6px;">
+            <input type="file" id="Foto_2" accept="image/*" style="margin-bottom: 6px;">
+            <input type="file" id="Foto_3" accept="image/*" style="margin-bottom: 6px;">
+            <input type="file" id="Foto_4" accept="image/*" style="margin-bottom: 6px;">
+            <input type="file" id="Foto_5" accept="image/*">
         </div>
 
         <button type="submit" id="btnSubmit">Kirim ke Sistem</button>
-        
-        <!-- Tombol WhatsApp yang otomatis memuat teks laporan -->
         <button type="button" id="btnWhatsApp" class="btn-whatsapp" onclick="sendToWhatsAppWithText()">💬 Klik Kirim Pesan Laporan ke WhatsApp</button>
         
         <div id="statusMessage"></div>
     </form>
 
-    <!-- Menu Panel Admin (Tanpa Pop-up Bawaan Browser) -->
+    <!-- Menu Panel Admin -->
     <div class="admin-section">
         <button type="button" class="btn-admin" onclick="toggleAdminPanel()">Admin</button>
         <div id="adminPanel" style="display: none; margin-top: 10px;">
@@ -247,39 +239,29 @@
             <button type="button" class="btn" style="background: #0284c7; font-size: 13px; padding: 8px; margin-bottom: 5px;" onclick="verifyAdminPassword()">Masuk Admin</button>
             
             <div id="adminMenuOptions" style="display: none; margin-top: 10px;">
-                <button type="button" class="btn-danger" onclick="resetKategoriData()">Reset Semua Kategori Hari Ini</button>
+                <button type="button" class="btn-danger" onclick="resetKategoriData()">Reset Data Lokal</button>
             </div>
         </div>
     </div>
-
-    <!-- Iframe tersembunyi untuk menangkap proses kirim -->
-    <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;" onload="handleResponse()"></iframe>
 </div>
 
 <script>
-    // Fungsi untuk menampilkan Jam & Hari Live
+    // Jam Live
     function updateClock() {
         const now = new Date();
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        const tanggalStr = now.toLocaleDateString('id-ID', options);
-        const jamStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        document.getElementById('liveClock').innerHTML = `📅 ${tanggalStr} | ⏰ ${jamStr} WIB`;
+        document.getElementById('liveClock').innerHTML = `📅 ${now.toLocaleDateString('id-ID', options)} | ⏰ ${now.toLocaleTimeString('id-ID')} WIB`;
     }
     setInterval(updateClock, 1000);
     updateClock();
 
-    // ===================================================
-    // MASUKKAN KONFIGURASI ANDA DI SINI
-    // ===================================================
+    // ================= CONFIGURASI =================
     const ID_FOLDER_ABSENSI = "1egZm6HVSS8k9h3XG-uqKTnxdCu9_Jqp5";
     const ID_FOLDER_BAHAN_BAKU = "1NVVeIFqZUcMUu8l9_NYPIeV4LQk9qIig";
     const ID_FOLDER_LAINNYA = "MASUKKAN_ID_FOLDER_KETIGA_DISINI"; 
-
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzx4oIIeK7qbfl3mqb_0LpDcgmxC_-skB1XFTwOUwezaIsmDxi0NBfYa8GsXw1_kKKwyQ/exec";
-    
-    // Masukkan Nomor WhatsApp Tujuan (Awali dengan kode negara 62, contoh: 6283111399112)
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxx-dvpS95HRXyoyKmEedBKeF6g7Ksuts01OhZzeSYWTpJdtHhM1L9z_F0Ij6Ikd41BnA/exec";
     const WHATSAPP_NUMBER = "6283111399112"; 
-    // ===================================================
+    // ===============================================
 
     const ALL_CATEGORIES = [
         "FOTO ABSENSI RELAWAN", "FOTO BAHAN BAKU", "FOTO BAHAN BAKU RIJECK", "FOTO CLEANING SERVICE", "FOTO DAPUR",
@@ -290,66 +272,71 @@
         "FOTO TIM FOODTRAY", "FOTO SAAT SO BAHAN BAKU", "FOTO PERBAIKAN DI DAPUR (JIKA ADA)", "FOTO SAAT CUCI KENDARAAN", "FOTO SAAT MEMBERSIHAKN IPAL"
     ];
 
-    const form = document.getElementById('uploadForm');
-    form.action = WEB_APP_URL;
-
-    let queueFiles = [];
-    let currentQueueIndex = 0;
+    let serverUploadedData = [];
     let activeNama = "";
     let activeKategori = "";
-    let targetFolderId = "";
+    let queueFiles = [];
+    let currentQueueIndex = 0;
     let totalUploadedCount = 0;
-    let isSubmitted = false;
 
-    // Fungsi Refresh & Sinkronisasi Data
-    function syncAndRefreshData() {
-        // Membersihkan cache halaman agar data diperbarui secara total
-        location.reload(true);
+    function fetchServerStatus() {
+        const statusDiv = document.getElementById('statusMessage');
+        statusDiv.style.color = "#0284c7";
+        statusDiv.innerText = "⏳ Menyinkronkan data dari server...";
+
+        fetch(WEB_APP_URL, {
+            method: "POST",
+            body: JSON.stringify({ action: "getStatus" }),
+            headers: { "Content-Type": "text/plain;charset=utf-8" }
+        })
+        .then(res => res.json())
+        .then(response => {
+            if(response.status === "success") {
+                serverUploadedData = response.data;
+                statusDiv.style.color = "#16a34a";
+                statusDiv.innerText = "✅ Data berhasil disinkronkan!";
+                renderKategoriDropdown();
+                setTimeout(() => { statusDiv.innerText = ""; }, 3000);
+            }
+        })
+        .catch(err => {
+            statusDiv.style.color = "#dc2626";
+            statusDiv.innerText = "❌ Gagal sinkronisasi ke server.";
+        });
     }
 
-    function updateKategoriOptions() {
-        const nama = document.getElementById('nama').value;
+    function renderKategoriDropdown() {
         const selectKategori = document.getElementById('kategori');
-        const warningBox = document.getElementById('warningBox');
-        
         selectKategori.innerHTML = '<option value="">-- Pilih Kategori --</option>';
 
-        if (!nama) {
-            warningBox.style.display = 'none';
-            return;
-        }
-
-        const now = new Date().getTime();
-        const twentyFourHours = 24 * 60 * 60 * 1000;
-        let historyData = JSON.parse(localStorage.getItem('upload_history_' + nama)) || {};
-
-        let hasUnuploadedCategories = false;
-
         ALL_CATEGORIES.forEach(kat => {
-            let lastUploadTime = historyData[kat];
-            let isExpired = !lastUploadTime || (now - lastUploadTime > twentyFourHours);
+            let option = document.createElement('option');
+            option.value = kat;
+            let isUploaded = serverUploadedData.some(item => item.kategori === kat);
 
-            if (isExpired) {
-                let option = document.createElement('option');
-                option.value = kat;
-                option.textContent = kat.replace(/_/g, ' ');
-                selectKategori.appendChild(option);
-                hasUnuploadedCategories = true;
+            if (isUploaded) {
+                option.textContent = `✅ ${kat} (Sudah diupload)`;
+            } else {
+                option.textContent = kat;
             }
+            selectKategori.appendChild(option);
         });
-
-        if (hasUnuploadedCategories) {
-            warningBox.style.display = 'block';
-        } else {
-            warningBox.style.display = 'none';
-        }
     }
 
-    form.addEventListener('submit', function(e) {
+    window.onload = function() {
+        fetchServerStatus();
+    };
+
+    document.getElementById('uploadForm').addEventListener('submit', function(e) {
         e.preventDefault();
 
         activeNama = document.getElementById('nama').value;
         activeKategori = document.getElementById('kategori').value;
+
+        if (!activeNama || !activeKategori) {
+            alert("Harap pilih Nama Pengirim dan Kategori Foto!");
+            return;
+        }
 
         queueFiles = [];
         for (let i = 1; i <= 5; i++) {
@@ -365,125 +352,132 @@
         }
 
         totalUploadedCount = queueFiles.length;
-
-        targetFolderId = ID_FOLDER_ABSENSI;
-        if (activeKategori === "Absensi") {
-            targetFolderId = ID_FOLDER_ABSENSI;
-        } else if (activeKategori === "Terima_Bahan_Baku") {
-            targetFolderId = ID_FOLDER_BAHAN_BAKU;
-        } else {
-            targetFolderId = ID_FOLDER_LAINNYA;
-        }
-
         document.getElementById('btnSubmit').disabled = true;
         document.getElementById('btnWhatsApp').style.display = 'none';
-        document.getElementById('btnSubmit').innerText = "Mengunggah (0/" + queueFiles.length + ")...";
-        document.getElementById('statusMessage').innerText = "";
+        document.getElementById('statusMessage').style.color = "#0284c7";
 
         currentQueueIndex = 0;
-        uploadNextQueueFile();
+        processAndUploadFile();
     });
 
-    function uploadNextQueueFile() {
-        if (currentQueueIndex >= queueFiles.length) {
-            const now = new Date().getTime();
-            let historyData = JSON.parse(localStorage.getItem('upload_history_' + activeNama)) || {};
-            historyData[activeKategori] = now;
-            localStorage.setItem('upload_history_' + activeNama, JSON.stringify(historyData));
+    // Fungsi untuk mengompres ukuran foto otomatis agar tidak error jaringan
+    function compressImage(file, callback) {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = function (event) {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = function () {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 1024;
+                const MAX_HEIGHT = 1024;
+                let width = img.width;
+                let height = img.height;
 
-            const statusDiv = document.getElementById('statusMessage');
-            statusDiv.style.color = "#16a34a";
-            statusDiv.innerText = `Sukses! ${totalUploadedCount} foto berhasil dikirim ke sistem.`;
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Kompres ke format JPEG dengan kualitas 0.7 (70%) agar ringan dikirim
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                callback(dataUrl);
+            };
+        };
+    }
+
+    function processAndUploadFile() {
+        if (currentQueueIndex >= queueFiles.length) {
+            document.getElementById('statusMessage').style.color = "#16a34a";
+            document.getElementById('statusMessage').innerText = `Sukses! ${totalUploadedCount} foto berhasil dikirim.`;
             
-            form.reset();
-            
+            document.getElementById('uploadForm').reset();
             const btn = document.getElementById('btnSubmit');
             btn.disabled = false;
             btn.innerText = "Kirim ke Sistem";
-
-            // Munculkan tombol WhatsApp yang sudah berisi teks laporan lengkap
             document.getElementById('btnWhatsApp').style.display = 'block';
 
-            updateKategoriOptions();
+            fetchServerStatus();
             return;
         }
 
         let file = queueFiles[currentQueueIndex];
-        document.getElementById('statusMessage').style.color = "#0284c7";
-        document.getElementById('statusMessage').innerText = `Mengunggah foto ${currentQueueIndex + 1} dari ${queueFiles.length}...`;
+        document.getElementById('statusMessage').innerText = `Mengompres & Mengunggah foto ${currentQueueIndex + 1} dari ${queueFiles.length}...`;
 
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = function () {
-            document.getElementById('folderId').value = targetFolderId;
-            document.getElementById('fileData').value = reader.result;
-            document.getElementById('fileName').value = `${activeNama}_${activeKategori}_${file.name}`;
-            document.getElementById('mimeType').value = file.type;
+        let targetFolderId = ID_FOLDER_ABSENSI;
+        if (activeKategori === "FOTO BAHAN BAKU") targetFolderId = ID_FOLDER_BAHAN_BAKU;
 
-            isSubmitted = true;
-            form.submit();
-        };
+        compressImage(file, function(compressedDataUrl) {
+            let payload = {
+                folderId: targetFolderId,
+                fileData: compressedDataUrl,
+                fileName: `${activeNama}_${activeKategori}_${file.name}`,
+                mimeType: "image/jpeg",
+                nama: activeNama,
+                kategori: activeKategori
+            };
+
+            fetch(WEB_APP_URL, {
+                method: "POST",
+                body: JSON.stringify(payload),
+                headers: { "Content-Type": "text/plain;charset=utf-8" }
+            })
+            .then(res => res.json())
+            .then(res => {
+                if(res.status === "success") {
+                    currentQueueIndex++;
+                    processAndUploadFile();
+                } else {
+                    alert("Gagal upload dari server: " + res.message);
+                    document.getElementById('btnSubmit').disabled = false;
+                }
+            })
+            .catch(err => {
+                alert("Terjadi kesalahan jaringan. Periksa koneksi internet Anda atau kurangi jumlah foto yang dikirim sekaligus.");
+                document.getElementById('btnSubmit').disabled = false;
+            });
+        });
     }
 
-    function handleResponse() {
-        if (isSubmitted) {
-            isSubmitted = false;
-            currentQueueIndex++;
-            if (currentQueueIndex < queueFiles.length) {
-                setTimeout(uploadNextQueueFile, 1000);
-            } else {
-                uploadNextQueueFile();
-            }
-        }
-    }
-
-    // Fungsi untuk membuat dan membuka WhatsApp dengan teks laporan otomatis
     function sendToWhatsAppWithText() {
-        const formattedKategori = activeKategori.replace(/_/g, ' ');
-        const currentTime = new Date().toLocaleString('id-ID');
-        
         const message = `*LAPORAN DOKUMENTASI SPPG KOTA SERANG 2*\n\n` +
                         `👤 *Pengirim:* ${activeNama}\n` +
-                        `📂 *Kategori:* ${formattedKategori}\n` +
+                        `📂 *Kategori:* ${activeKategori}\n` +
                         `📸 *Jumlah Foto:* ${totalUploadedCount} Foto\n` +
-                        `⏰ *Waktu:* ${currentTime} WIB\n\n` +
+                        `⏰ *Waktu:* ${new Date().toLocaleString('id-ID')} WIB\n\n` +
                         `✅ Status: Foto telah berhasil di-upload ke sistem.`;
 
-        const encodedMessage = encodeURIComponent(message);
-        const whatsappURL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
-        
-        window.open(whatsappURL, '_blank');
+        window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank');
     }
 
-    // Fungsi Panel Admin Tanpa Pop-up Bawaan Browser
     function toggleAdminPanel() {
         const panel = document.getElementById('adminPanel');
-        if (panel.style.display === "none") {
-            panel.style.display = "block";
-        } else {
-            panel.style.display = "none";
-            document.getElementById('adminMenuOptions').style.display = "none";
-            document.getElementById('adminPasswordInput').value = "";
-        }
+        panel.style.display = panel.style.display === "none" ? "block" : "none";
     }
-
     function verifyAdminPassword() {
-        const pass = document.getElementById('adminPasswordInput').value;
-        if (pass === "Mandiri02srg") {
+        if (document.getElementById('adminPasswordInput').value === "Mandiri02srg") {
             document.getElementById('adminMenuOptions').style.display = "block";
-            alert("Password benar! Menu admin ditampilkan.");
+            alert("Password benar!");
         } else {
             alert("Password salah!");
-            document.getElementById('adminMenuOptions').style.display = "none";
         }
     }
-
     function resetKategoriData() {
-        if (confirm("Yakin ingin mereset seluruh riwayat kategori agar muncul kembali?")) {
-            localStorage.clear();
-            alert("Berhasil! Semua kategori telah di-reset dan dapat dipilih kembali.");
-            location.reload();
-        }
+        localStorage.clear();
+        alert("Cache lokal dibersihkan.");
+        location.reload();
     }
 </script>
 
