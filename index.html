@@ -193,7 +193,7 @@
     <button type="button" class="btn-refresh" onclick="fetchServerStatus()">🔄 Refresh & Sinkronkan Data Publik</button>
     
     <div id="warningBox" class="warning-box">
-        ⚠️ <strong>PENGUMUMAN :</strong> FOTO WAJIB HARUS DI KIRIM SETIAP HARI. Ceklis (✅) menandakan kategori sudah di-upload hari ini oleh tim.
+        ⚠️ <strong>PENGUMUMAN :</strong> FOTO WAJIB HARUS DI KIRIM SETIAP HARI. Tanda (✅) otomatis muncul jika kategori sudah di-upload.
     </div>
 
     <!-- Form Upload -->
@@ -239,7 +239,7 @@
             <button type="button" class="btn" style="background: #0284c7; font-size: 13px; padding: 8px; margin-bottom: 5px;" onclick="verifyAdminPassword()">Masuk Admin</button>
             
             <div id="adminMenuOptions" style="display: none; margin-top: 10px;">
-                <button type="button" class="btn-danger" onclick="resetKategoriData()">Reset Data Lokal</button>
+                <button type="button" class="btn-danger" onclick="resetLocalCache()">Bersihkan Cache Lokal</button>
             </div>
         </div>
     </div>
@@ -259,7 +259,7 @@
     const ID_FOLDER_ABSENSI = "1egZm6HVSS8k9h3XG-uqKTnxdCu9_Jqp5";
     const ID_FOLDER_BAHAN_BAKU = "1NVVeIFqZUcMUu8l9_NYPIeV4LQk9qIig";
     const ID_FOLDER_LAINNYA = "MASUKKAN_ID_FOLDER_KETIGA_DISINI"; 
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxx-dvpS95HRXyoyKmEedBKeF6g7Ksuts01OhZzeSYWTpJdtHhM1L9z_F0Ij6Ikd41BnA/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx5bgVE3Kl0nFanvfXvKaQFAvyTYbjWAvFWLX4v1d3cwvUscK9gPVoto_VpBO_6VImj3A/exec";
     const WHATSAPP_NUMBER = "6283111399112"; 
     // ===============================================
 
@@ -279,16 +279,13 @@
     let currentQueueIndex = 0;
     let totalUploadedCount = 0;
 
+    // Ambil data status dari server menggunakan metode GET agar bebas dari kendala CORS
     function fetchServerStatus() {
         const statusDiv = document.getElementById('statusMessage');
         statusDiv.style.color = "#0284c7";
-        statusDiv.innerText = "⏳ Menyinkronkan data dari server...";
+        statusDiv.innerText = "⏳ Menyinkronkan data publik...";
 
-        fetch(WEB_APP_URL, {
-            method: "POST",
-            body: JSON.stringify({ action: "getStatus" }),
-            headers: { "Content-Type": "text/plain;charset=utf-8" }
-        })
+        fetch(WEB_APP_URL + "?action=getStatus")
         .then(res => res.json())
         .then(response => {
             if(response.status === "success") {
@@ -296,12 +293,12 @@
                 statusDiv.style.color = "#16a34a";
                 statusDiv.innerText = "✅ Data berhasil disinkronkan!";
                 renderKategoriDropdown();
-                setTimeout(() => { statusDiv.innerText = ""; }, 3000);
+                setTimeout(() => { statusDiv.innerText = ""; }, 2500);
             }
         })
         .catch(err => {
             statusDiv.style.color = "#dc2626";
-            statusDiv.innerText = "❌ Gagal sinkronisasi ke server.";
+            statusDiv.innerText = "⚠️ Gagal sinkronisasi server.";
         });
     }
 
@@ -312,6 +309,8 @@
         ALL_CATEGORIES.forEach(kat => {
             let option = document.createElement('option');
             option.value = kat;
+            
+            // Cek apakah kategori ini sudah tercatat di server hari ini
             let isUploaded = serverUploadedData.some(item => item.kategori === kat);
 
             if (isUploaded) {
@@ -360,7 +359,7 @@
         processAndUploadFile();
     });
 
-    // Fungsi untuk mengompres ukuran foto otomatis agar tidak error jaringan
+    // Fungsi Kompresi Foto Otomatis agar ukuran file ringan dan tidak timeout
     function compressImage(file, callback) {
         const reader = new FileReader();
         reader.readAsDataURL(file);
@@ -391,7 +390,6 @@
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
 
-                // Kompres ke format JPEG dengan kualitas 0.7 (70%) agar ringan dikirim
                 const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
                 callback(dataUrl);
             };
@@ -409,6 +407,7 @@
             btn.innerText = "Kirim ke Sistem";
             document.getElementById('btnWhatsApp').style.display = 'block';
 
+            // Sinkron otomatis setelah upload berhasil agar tanda ceklis muncul
             fetchServerStatus();
             return;
         }
@@ -440,12 +439,12 @@
                     currentQueueIndex++;
                     processAndUploadFile();
                 } else {
-                    alert("Gagal upload dari server: " + res.message);
+                    alert("Gagal upload: " + res.message);
                     document.getElementById('btnSubmit').disabled = false;
                 }
             })
             .catch(err => {
-                alert("Terjadi kesalahan jaringan. Periksa koneksi internet Anda atau kurangi jumlah foto yang dikirim sekaligus.");
+                alert("Terjadi kesalahan jaringan saat mengirim foto.");
                 document.getElementById('btnSubmit').disabled = false;
             });
         });
@@ -474,7 +473,7 @@
             alert("Password salah!");
         }
     }
-    function resetKategoriData() {
+    function resetLocalCache() {
         localStorage.clear();
         alert("Cache lokal dibersihkan.");
         location.reload();
