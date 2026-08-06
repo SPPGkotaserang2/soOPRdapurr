@@ -334,7 +334,7 @@
         renderCategories();
     }
 
-    function renderCategories() {
+  function renderCategories() {
         const container = document.getElementById('categoryContainer');
         container.innerHTML = '';
 
@@ -369,12 +369,64 @@
                 card.innerHTML = `
                     <div class="category-title">${kat}</div>
                     <label style="font-size: 11px; color: #475569; margin-bottom: 2px;">Unggah Foto (Bisa pilih banyak):</label>
-                    <input type="file" name="cat_files_${index}" data-category="${kat}" accept="image/*" multiple>
+                    <input type="file" name="cat_files_${index}" data-category="${kat}" accept="image/*" multiple onchange="compressImages(this)">
                 `;
             }
             container.appendChild(card);
         });
     }
+
+    // Fungsi tambahan khusus untuk mengecilkan ukuran foto dari HP agar mulus masuk ke Google Drive
+    function compressImages(input) {
+        if (!input.files || input.files.length === 0) return;
+        const files = Array.from(input.files);
+        let compressedFiles = [];
+
+        let count = 0;
+        files.forEach((file, idx) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    const MAX_WIDTH = 1200;
+                    const MAX_HEIGHT = 1200;
+                    if (width > height) {
+                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                    } else {
+                        if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    canvas.toBlob(function(blob) {
+                        const compressedFile = new File([blob], file.name, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+                        
+                        compressedFiles[idx] = compressedFile;
+                        count++;
+
+                        if (count === files.length) {
+                            const dataTransfer = new DataTransfer();
+                            compressedFiles.forEach(f => dataTransfer.items.add(f));
+                            input.files = dataTransfer.files;
+                        }
+                    }, 'image/jpeg', 0.7);
+                };
+            };
+        });
+    }
+
 
     renderCategories();
 
