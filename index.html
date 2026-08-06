@@ -109,6 +109,16 @@
             transform: translateY(-1px);
             box-shadow: 0 6px 15px rgba(37, 99, 235, 0.4);
         }
+        .btn-refresh {
+            background: linear-gradient(135deg, #0d9488, #0f766e) !important;
+            margin-bottom: 15px;
+            font-size: 13px;
+            padding: 10px;
+            box-shadow: 0 3px 10px rgba(13, 148, 136, 0.3);
+        }
+        .btn-refresh:hover {
+            background: linear-gradient(135deg, #0f766e, #115e59) !important;
+        }
         .btn-whatsapp {
             background: linear-gradient(135deg, #16a34a, #15803d) !important;
             margin-top: 12px;
@@ -179,6 +189,9 @@
         <h2 class="main-title">DOKUMENTASI</h2>
         <h2 class="sub-title">SPPG KOTA SERANG SERANG SERANG 2</h2>
     </div>
+
+    <!-- Tombol Refresh / Sinkronisasi Data Antar HP -->
+    <button type="button" class="btn-refresh" onclick="syncAndRefreshData()">🔄 Refresh & Sinkronkan Data</button>
     
     <div id="warningBox" class="warning-box">
         ⚠️ <strong>PENGUMUMAN :</strong> FOTO WAJIB HARUS DI KIRIM SETIAP HARI
@@ -286,6 +299,13 @@
     let activeKategori = "";
     let targetFolderId = "";
     let totalUploadedCount = 0;
+    let isSubmitted = false;
+
+    // Fungsi Refresh & Sinkronisasi Data
+    function syncAndRefreshData() {
+        // Membersihkan cache halaman agar data diperbarui secara total
+        location.reload(true);
+    }
 
     function updateKategoriOptions() {
         const nama = document.getElementById('nama').value;
