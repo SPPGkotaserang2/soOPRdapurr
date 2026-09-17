@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Barang Keluar Masuk opr Dapur</title>
+    <style>
+        * { box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { background-color: #f4f7f6; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        h2 { text-align: center; color: #333; }
+        #login-section { max-width: 400px; margin: 60px auto; padding: 30px; background: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; }
+        .logo-login { width: 80px; height: 80px; object-fit: contain; margin-bottom: 15px; }
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; color: #444; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        .btn { background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-size: 15px; font-weight: bold; transition: background 0.2s; }
+        .btn:hover { background-color: #218838; }
+        .btn-danger { background-color: #dc3545; width: auto; padding: 8px 15px; font-size: 13px; }
+        .btn-danger:hover { background-color: #c82333; }
+        .btn-warning { background-color: #ffc107; color: #212529; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; margin-right: 4px; }
+        .btn-warning:hover { background-color: #e0a800; }
+        .btn-del-table { background-color: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; }
+        .btn-del-table:hover { background-color: #c82333; }
+        .btn-secondary { background-color: #6c757d; color: white; margin-top: 10px; display: none; }
+        .btn-secondary:hover { background-color: #5a6268; }
+        .btn-primary-outline { background-color: #ffffff; color: #007bff; border: 1px solid #007bff; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-primary-outline:hover { background-color: #007bff; color: #fff; }
+        .error-msg { color: red; font-size: 14px; margin-top: 10px; text-align: center; }
+        
+        #dashboard-section { display: none; }
+        .header-dash { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
+        .info-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+        @media (max-width: 768px) { .info-panel { grid-template-columns: 1fr; } }
+        .widget-box { background: #f8f9fa; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; }
+        .widget-box h4 { margin: 0 0 10px 0; color: #2b6cb0; font-size: 15px; border-bottom: 1px dashed #cbd5e0; padding-bottom: 5px; }
+        .sholat-grid { display: flex; justify-content: space-between; text-align: center; font-size: 13px; }
+        .sholat-item strong { display: block; color: #4a5568; font-size: 11px; margin-bottom: 3px; }
+        .sholat-item span { color: #1a202c; font-weight: bold; }
+        .quote-box p { margin: 0; font-style: italic; color: #2d3748; font-size: 13px; line-height: 1.4; }
+        .quote-category { display: inline-block; margin-top: 8px; font-size: 10px; background: #edf2f7; padding: 2px 6px; border-radius: 4px; color: #718096; font-weight: bold; text-transform: uppercase; }
+
+        .top-action-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 25px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; overflow-x: auto; display: block; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; font-size: 13px; vertical-align: middle; }
+        th { background-color: #f8f9fa; color: #333; }
+        .grid-form { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .grid-form .full-width { grid-column: span 3; }
+
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); }
+        .modal-filter-box { background-color: #fff; margin: 10% auto; padding: 25px; border-radius: 8px; width: 100%; max-width: 450px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); position: relative; }
+        .modal-filter-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .modal-filter-header h3 { margin: 0; color: #333; }
+        .close-filter { font-size: 24px; font-weight: bold; cursor: pointer; color: #aaa; }
+        .close-filter:hover { color: #000; }
+
+        /* Styling Preview Foto di Tabel & Form */
+        .photo-gallery { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; }
+        .photo-thumb-container { position: relative; display: inline-block; }
+        .photo-thumb { width: 55px; height: 55px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; cursor: pointer; transition: transform 0.2s; }
+        .photo-thumb:hover { transform: scale(1.05); }
+
+        /* Modal Preview Gambar Besar & Tombol Unduh */
+        #imageModal .modal-filter-box { max-width: 600px; text-align: center; padding: 15px; background: #000; }
+        #modalImagePreview { width: 100%; max-height: 70vh; object-fit: contain; border-radius: 4px; margin-bottom: 15px; }
+        .btn-download-img { background-color: #007bff; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; text-decoration: none; display: inline-block; }
+        .btn-download-img:hover { background-color: #0056b3; }
+
+        /* TOAST NOTIFICATION STYLES */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            min-width: 280px;
+            max-width: 380px;
+            padding: 14px 18px;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
+        }
+        .toast.success { background-color: #2f855a; border-left: 5px solid #22543d; }
+        .toast.error { background-color: #c53030; border-left: 5px solid #742a2a; }
+        .toast.info { background-color: #2b6cb0; border-left: 5px solid #1a365d; }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- KONTAINER NOTIFIKASI PROFESIONAL -->
+    <div id="toast-container"></div>
+
+    <!-- SECTION LOGIN -->
+    <div id="login-section">
+        <img src="logo.png" alt="Logo Instansi" class="logo-login" onerror="this.style.display='none'">
+        <h1>Login Sistem</h1>
+        <h3>Inpur Data Masuk Dan Keluar Barang Operasional Dapur</h3>
+
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="username" placeholder="Masukkan Username">
+        </div>
+        <div class="form-group">
+            <label>Sandi</label>
+            <input type="password" id="password" placeholder="Masukkan Sandi">
+        </div>
+        <button class="btn" onclick="prosesLogin()">Login</button>
+        <div id="login-error" class="error-msg"></div>
+    </div>
+
+    <!-- SECTION DASHBOARD -->
+    <div id="dashboard-section" class="container">
+        <div class="header-dash">
+            <h2 id="formTitle">Form Input Barang Keluar Masuk</h2>
+            <button class="btn btn-danger" onclick="prosesLogout()">Logout</button>
+        </div>
+
+        <div class="info-panel">
+            <div class="widget-box">
+                <h4 id="widgetHariTanggal">📅 Memuat Waktu...</h4>
+                <div class="sholat-grid">
+                    <div class="sholat-item"><strong>Subuh</strong><span>04:38</span></div>
+                    <div class="sholat-item"><strong>Dzuhur</strong><span>12:00</span></div>
+                    <div class="sholat-item"><strong>Ashar</strong><span>15:15</span></div>
+                    <div class="sholat-item"><strong>Maghrib</strong><span>18:05</span></div>
+                    <div class="sholat-item"><strong>Isya</strong><span>19:14</span></div>
+                </div>
+            </div>
+            <div class="widget-box quote-box">
+                <h4>💡 Inspirasi & Wawasan</h4>
+                <p id="quoteText">Memuat mutiara hikmah...</p>
+                <span class="quote-category" id="quoteCategory">Umum</span>
+            </div>
+        </div>
+
+        <form id="formBarang" onsubmit="simpanAtauUpdateData(event)">
+            <input type="hidden" id="editId">
+            <div class="grid-form">
+                <div class="form-group">
+                    <label>Tanggal</label>
+                    <input type="date" id="tanggalInput" required>
+                </div>
+                <div class="form-group">
+                    <label>Nama Barang</label>
+                    <input type="text" id="namaBarang" required>
+                </div>
+                <div class="form-group">
+                    <label>Satuan</label>
+                    <input type="text" id="satuanBarang" placeholder="Pcs/Box/Kg dll" required>
+                </div>
+                <div class="form-group">
+                    <label>Jumlah Keluar</label>
+                    <input type="number" id="jmlKeluar" value="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Jumlah Masuk</label>
+                    <input type="number" id="jmlMasuk" value="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Yang Ambil / Yang Menerima</label>
+                    <input type="text" id="yangAmbil" required>
+                </div>
+                <div class="form-group full-width">
+                    <label>Keterangan</label>
+                    <input type="text" id="keterangan" placeholder="Keterangan tambahan (opsional)">
+                </div>
+                <div class="form-group full-width">
+                    <label>Upload Foto (Opsional, bisa pilih lebih dari 1 foto)</label>
+                    <input type="file" id="fileFoto" accept="image/*" multiple>
+                    
+                </div>
+
+                <div class="form-group full-width">
+                    <button type="submit" class="btn" id="btnSimpan">Simpan Data</button>
+                    <button type="button" class="btn btn-secondary" id="btnBatalEdit" onclick="batalEditMode()">Batal Edit</button>
+                </div>
+            </div>
+        </form>
+
+        <div class="top-action-bar">
+            <h3 id="judulTabel" style="margin: 0; color: #333;">Rekap Data Barang Keluar Masuk (Hari Ini)</h3>
+            <button type="button" class="btn-primary-outline" onclick="bukaModalFilter()">🔍 Cari Data</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Hari</th>
+                    <th>Tanggal</th>
+                    <th>Nama Barang</th>
+                    <th>Satuan</th>
+                    <th>Jml Keluar</th>
+                    <th>Jml Masuk</th>
+                    <th>Yang Ambil / Menerima</th>
+                    <th>Keterangan</th>
+                    <th>Foto Bukti</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="tabelData"></tbody>
+        </table>
+    </div>
+
+    <!-- MODAL FILTER -->
+    <div id="filterModal" class="modal">
+        <div class="modal-filter-box">
+            <div class="modal-filter-header">
+                <h3>Filter Rentang Tanggal</h3>
+                <span class="close-filter" onclick="tutupModalFilter()">&times;</span>
+            </div>
+            <div class="form-group">
+                <label>Dari Tanggal:</label>
+                <input type="date" id="modalDari">
+            </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label>Sampai Tanggal:</label>
+                <input type="date" id="modalSampai">
+            </div>
+            <button type="button" class="btn" onclick="terapkanFilterModal()">Tampilkan Data</button>
+        </div>
+    </div>
+
+    <!-- MODAL PREVIEW GAMBAR BESAR & DOWNLOAD -->
+    <div id="imageModal" class="modal" onclick="tutupModalGambar()">
+        <div class="modal-filter-box" style="margin: 5vh auto;" onclick="event.stopPropagation()">
+            <span class="close-filter" style="color: #fff; float: right; margin-bottom: 10px;" onclick="tutupModalGambar()">&times;</span>
+            <img id="modalImagePreview" src="" alt="Pratinjau Foto">
+            <div style="text-align: center;">
+                <a id="btnDownloadModal" href="" target="_blank" download="Bukti_Barang.jpg" class="btn-download-img">📥 Unduh Foto Ini</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL KONFIRMASI HAPUS -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-filter-box" style="max-width: 380px; text-align: center;">
+            <h3 style="margin-top: 0; color: #c53030;">Konfirmasi Hapus</h3>
+            <p style="color: #555; font-size: 14px; margin: 15px 0 25px 0;">Apakah Anda yakin ingin menghapus data ini dari sistem?</p>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" class="btn" style="background-color: #6c757d;" onclick="tutupKonfirmasiHapus()">Batal</button>
+                <button type="button" class="btn" style="background-color: #dc3545;" id="btnKonfirmasiHapusYa">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL KONFIRMASI HAPUS FOTO -->
+    <div id="confirmPhotoModal" class="modal">
+        <div class="modal-filter-box" style="max-width: 380px; text-align: center;">
+            <h3 style="margin-top: 0; color: #c53030;">Konfirmasi Hapus Foto</h3>
+            <p style="color: #555; font-size: 14px; margin: 15px 0 25px 0;">Apakah Anda yakin ingin menghapus foto ini? File juga akan terhapus dari Google Drive.</p>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" class="btn" style="background-color: #6c757d;" onclick="tutupKonfirmasiHapusFoto()">Batal</button>
+                <button type="button" class="btn" style="background-color: #dc3545;" id="btnKonfirmasiHapusFotoYa">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT UTAMA DENGAN FIREBASE & TOAST NOTIFICATION -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCYvyZIklL4PxS-MpErPNAKuTdAP-4UANM",
+            authDomain: "keluar-masuk-opr-dpaur.firebaseapp.com",
+            projectId: "keluar-masuk-opr-dpaur",
+            storageBucket: "keluar-masuk-opr-dpaur.firebasestorage.app",
+            messagingSenderId: "1076915508139",
+            appId: "1:1076915508139:web:74ad6cd7fd75d83ce978ee",
+            measurementId: "G-L9DZGM131J"
+        };
+
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyyzrGz-RLCIYd3Zo3zUolSgMSEe62A8Q6qamt8shmwVzxDxVZAbBK5tlIFaARtbEs/exec";
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getFirestore(app);
+
+        let globalDatabaseBarang = [];
+        let currentFilterMode = 'hariIni'; 
+        let currentRentang = { dari: '', sampai: '' };
+        let idItemYangAkanDihapus = null;
+        let fotoDataYangAkanDihapus = { docId: null, fileId: null };
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 3000);
+        }
+
+        const quotes = [
+            { text: "Sesungguhnya sesudah kesulitan itu ada kemudahan.", cat: "Religi" },
+            { text: "Jangan mengukur kemajuanmu dengan pencapaian orang lain.", cat: "Motivasi" }
+        ];
+        let qIdx = 0;
+        function rotasiKata() {
+            document.getElementById('quoteText').innerText = `"${quotes[qIdx].text}"`;
+            document.getElementById('quoteCategory').innerText = quotes[qIdx].cat;
+            qIdx = (qIdx + 1) % quotes.length;
+        }
+
+        function updateLiveClock() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const tanggalStr = now.toLocaleDateString('id-ID', options);
+            const jamStr = now.toTimeString().split(' ')[0];
+            const el = document.getElementById('widgetHariTanggal');
+            if (el) {
+                el.innerText = `📅 ${tanggalStr} - ${jamStr}`;
+            }
+        }
+
+        window.onload = function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('tanggalInput').value = today;
+            document.getElementById('modalDari').value = today;
+            document.getElementById('modalSampai').value = today;
+            rotasiKata();
+            updateLiveClock();
+            setInterval(updateLiveClock, 1000);
+
+            if (localStorage.getItem('isLoggedIn') === 'true') {
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('dashboard-section').style.display = 'block';
+                inisialisasiDashboard();
+            }
+        };
+
+        function inisialisasiDashboard() {
+            const q = query(collection(db, "transaksiBarang"));
+            onSnapshot(q, (snapshot) => {
+                globalDatabaseBarang = [];
+                snapshot.forEach((docSnap) => {
+                    globalDatabaseBarang.push({ id: docSnap.id, ...docSnap.data() });
+                });
+                refreshTampilanAktif();
+            }, (error) => {
+                console.error("Gagal memuat data dari Sistem:", error);
+                showToast("Gagal menyinkronkan data dari cloud.", "error");
+            });
+        }
+
+        window.prosesLogin = function() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            if (user === 'Serang' && pass === 'Mandiri02srg') {
+                localStorage.setItem('isLoggedIn', 'true');
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('dashboard-section').style.display = 'block';
+                inisialisasiDashboard();
+                showToast("Login Berhasil! Selamat datang.", "success");
+            } else {
+                document.getElementById('login-error').innerText = 'Username atau Sandi salah!';
+            }
+        };
+
+        window.prosesLogout = function() {
+            localStorage.removeItem('isLoggedIn');
+            location.reload();
+        };
+
+        function getNamaHari(tgl) {
+            const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            return days[new Date(tgl).getDay()];
+        }
+
+        function readFileAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve({
+                    name: file.name,
+                    mimeType: file.type,
+                    data: reader.result.split(',')[1]
+                });
+                reader.onerror = error => reject(error);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Upload foto ke Google Drive secara paralel (lebih cepat)
+        async function uploadFotoKeDrive(files, statusTextCallback) {
+            let uploadedFiles = []; 
+            if (!files || files.length === 0) return uploadedFiles;
+
+            const namaBarangVal = document.getElementById('namaBarang').value || "Barang";
+            const tanggalVal = document.getElementById('tanggalInput').value;
+
+            if (statusTextCallback) statusTextCallback("Sedang Dikirim");
+
+            const uploadPromises = Array.from(files).map(async (file) => {
+                try {
+                    const fileData = await readFileAsBase64(file);
+                    fileData.namaBarang = namaBarangVal;
+                    fileData.tanggal = tanggalVal;
+
+                    const response = await fetch(APPS_SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify(fileData)
+                    });
+                    const result = await response.json();
+                    if (result && result.url) {
+                        return { url: result.url, fileId: result.fileId };
+                    }
+                } catch (err) {
+                    console.error("Gagal upload file:", err);
+                }
+                return null;
+            });
+
+            const results = await Promise.all(uploadPromises);
+            uploadedFiles = results.filter(item => item !== null);
+            return uploadedFiles;
+        }
+
+        // Hapus foto dari Google Drive lewat Apps Script
+        async function hapusFotoDariDrive(fileId) {
+            if (!fileId) return;
+            try {
+                await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'delete', fileId: fileId })
+                });
+            } catch (err) {
+                console.error("Gagal menghapus file dari Drive:", err);
+            }
+        }
+
+        window.simpanAtauUpdateData = async function(event) {
+            event.preventDefault();
+            const btnSimpan = document.getElementById('btnSimpan');
+            const editId = document.getElementById('editId').value;
+            
+            const tanggal = document.getElementById('tanggalInput').value;
+            const hari = getNamaHari(tanggal);
+            const namaBarang = document.getElementById('namaBarang').value;
+            const satuan = document.getElementById('satuanBarang').value;
+            const jmlKeluar = Number(document.getElementById('jmlKeluar').value) || 0;
+            const jmlMasuk = Number(document.getElementById('jmlMasuk').value) || 0;
+            const yangAmbil = document.getElementById('yangAmbil').value || '-';
+            const keterangan = document.getElementById('keterangan').value || '-';
+            const fileInput = document.getElementById('fileFoto');
+
+            try {
+                btnSimpan.disabled = true;
+                let newUploadedFiles = [];
+
+                if (fileInput.files.length > 0) {
+                    newUploadedFiles = await uploadFotoKeDrive(fileInput.files, (msg) => {
+                        btnSimpan.innerText = msg;
+                    });
+                }
+
+                if (editId) {
+                    btnSimpan.innerText = "Memperbarui...";
+                    const itemLama = globalDatabaseBarang.find(i => i.id === editId);
+                    const finalFiles = [...(itemLama.fotoFiles || []), ...newUploadedFiles];
+
+                    const docRef = doc(db, "transaksiBarang", editId);
+                    await updateDoc(docRef, {
+                        tanggal, hari, namaBarang, satuan, jmlKeluar, jmlMasuk, yangAmbil, keterangan, fotoFiles: finalFiles
+                    });
+
+                    showToast("Data berhasil diperbarui!", "success");
+                    batalEditMode();
+                } else {
+                    btnSimpan.innerText = "Menyimpan ke Cloud...";
+                    const timestamp = Date.now();
+
+                    await addDoc(collection(db, "transaksiBarang"), {
+                        tanggal, hari, namaBarang, satuan, jmlKeluar, jmlMasuk, yangAmbil, keterangan, fotoFiles: newUploadedFiles, timestamp
+                    });
+
+                    document.getElementById('formBarang').reset();
+                    document.getElementById('tanggalInput').value = new Date().toISOString().split('T')[0];
+                    currentFilterMode = 'hariIni';
+                    showToast("Data berhasil disimpan ke Sistem!", "success");
+                }
+            } catch (error) {
+                console.error(error);
+                showToast("Gagal memproses data: " + error.message, "error");
+            } finally {
+                btnSimpan.innerText = "Simpan Data";
+                btnSimpan.disabled = false;
+            }
+        };
+
+        window.konfirmasiHapusFotoSatuan = function(docId, fileId) {
+            fotoDataYangAkanDihapus = { docId, fileId };
+            document.getElementById('confirmPhotoModal').style.display = "block";
+        };
+
+        window.tutupKonfirmasiHapusFoto = function() {
+            fotoDataYangAkanDihapus = { docId: null, fileId: null };
+            document.getElementById('confirmPhotoModal').style.display = "none";
+        };
+
+        document.getElementById('btnKonfirmasiHapusFotoYa').onclick = async function() {
+            const { docId, fileId } = fotoDataYangAkanDihapus;
+            tutupKonfirmasiHapusFoto();
+            if (!docId || !fileId) return;
+
+            const item = globalDatabaseBarang.find(i => i.id === docId);
+            if (!item) return;
+
+            const updatedFotoFiles = (item.fotoFiles || []).filter(f => f.fileId !== fileId);
+
+            try {
+                const docRef = doc(db, "transaksiBarang", docId);
+                await updateDoc(docRef, { fotoFiles: updatedFotoFiles });
+                await hapusFotoDariDrive(fileId);
+                showToast("Foto berhasil dihapus dari web & Google Drive.", "success");
+            } catch (err) {
+                console.error(err);
+                showToast("Gagal menghapus foto.", "error");
+            }
+        };
+
+        window.bukaModalGambar = function(url) {
+            document.getElementById('modalImagePreview').src = url;
+            const btnDownload = document.getElementById('btnDownloadModal');
+            btnDownload.href = url;
+            document.getElementById('imageModal').style.display = "block";
+        };
+
+        window.tutupModalGambar = function() {
+            document.getElementById('imageModal').style.display = "none";
+        };
+
+        window.mulaiEditData = function(id) {
+            const item = globalDatabaseBarang.find(i => i.id === id);
+            if (!item) return;
+
+            document.getElementById('editId').value = item.id;
+            document.getElementById('tanggalInput').value = item.tanggal;
+            document.getElementById('namaBarang').value = item.namaBarang;
+            document.getElementById('satuanBarang').value = item.satuan;
+            document.getElementById('jmlKeluar').value = item.jmlKeluar;
+            document.getElementById('jmlMasuk').value = item.jmlMasuk;
+            document.getElementById('yangAmbil').value = item.yangAmbil;
+            document.getElementById('keterangan').value = item.keterangan;
+            document.getElementById('fileFoto').value = "";
+
+            document.getElementById('formTitle').innerText = "Edit Data Barang Keluar Masuk";
+            document.getElementById('btnSimpan').innerText = "Perbarui Data";
+            document.getElementById('btnBatalEdit').style.display = "block";
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            showToast("Mode edit aktif. Silakan tambah/ubah data.", "info");
+        };
+
+        window.batalEditMode = function() {
+            document.getElementById('formBarang').reset();
+            document.getElementById('editId').value = "";
+            document.getElementById('tanggalInput').value = new Date().toISOString().split('T')[0];
+            document.getElementById('formTitle').innerText = "Form Input Barang Keluar Masuk";
+            document.getElementById('btnSimpan').innerText = "Simpan Data";
+            document.getElementById('btnBatalEdit').style.display = "none";
+        };
+
+        window.hapusData = function(id) {
+            idItemYangAkanDihapus = id;
+            document.getElementById('confirmModal').style.display = "block";
+        };
+
+        window.tutupKonfirmasiHapus = function() {
+            idItemYangAkanDihapus = null;
+            document.getElementById('confirmModal').style.display = "none";
+        };
+
+        document.getElementById('btnKonfirmasiHapusYa').onclick = async function() {
+            if (!idItemYangAkanDihapus) return;
+            const id = idItemYangAkanDihapus;
+            tutupKonfirmasiHapus();
+
+            try {
+                const item = globalDatabaseBarang.find(i => i.id === id);
+                if (item && item.fotoFiles) {
+                    for (let f of item.fotoFiles) {
+                        if (f.fileId) await hapusFotoDariDrive(f.fileId);
+                    }
+                }
+
+                await deleteDoc(doc(db, "transaksiBarang", id));
+                showToast("Data berhasil dihapus.", "success");
+            } catch (error) {
+                console.error(error);
+                showToast("Gagal menghapus data: " + error.message, "error");
+            }
+        };
+
+        function renderTabel(dataList, judulKeterangan) {
+            const tabel = document.getElementById('tabelData');
+            document.getElementById('judulTabel').innerText = `Rekap Data Barang Keluar Masuk (${judulKeterangan})`;
+            tabel.innerHTML = '';
+
+            if (dataList.length === 0) {
+                tabel.innerHTML = `<tr><td colspan="11" style="padding: 20px; color: #777;">Tidak ada data untuk periode ini.</td></tr>`;
+                return;
+            }
+
+            dataList.forEach((item, index) => {
+                let fotoHtml = '-';
+                let listFiles = item.fotoFiles || (item.fotoUrls ? item.fotoUrls.map(u => ({url: u, fileId: ''})) : []);
+
+                if (listFiles.length > 0) {
+                    fotoHtml = `<div class="photo-gallery">`;
+                    listFiles.forEach((fileObj) => {
+                        fotoHtml += `
+                            <div class="photo-thumb-container">
+                                <img src="${fileObj.url}" class="photo-thumb" onclick="bukaModalGambar('${fileObj.url}')" title="Klik untuk memperbesar">
+                            </div>
+                        `;
+                    });
+                    fotoHtml += `</div>`;
+                }
+
+                const row = tabel.insertRow();
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${item.hari}</td>
+                    <td>${item.tanggal}</td>
+                    <td>${item.namaBarang}</td>
+                    <td>${item.satuan}</td>
+                    <td>${item.jmlKeluar}</td>
+                    <td>${item.jmlMasuk}</td>
+                    <td>${item.yangAmbil}</td>
+                    <td>${item.keterangan}</td>
+                    <td>${fotoHtml}</td>
+                    <td>
+                        <button class="btn-warning" onclick="mulaiEditData('${item.id}')">Edit</button>
+                        <button class="btn-del-table" onclick="hapusData('${item.id}')">Hapus</button>
+                    </td>
+                `;
+            });
+        }
+
+        function refreshTampilanAktif() {
+            if (currentFilterMode === 'hariIni') {
+                const today = new Date().toISOString().split('T')[0];
+                renderTabel(globalDatabaseBarang.filter(i => i.tanggal === today), `Hari Ini: ${today}`);
+            } else if (currentFilterMode === 'rentang') {
+                renderTabel(globalDatabaseBarang.filter(i => i.tanggal >= currentRentang.dari && i.tanggal <= currentRentang.sampai), `Rentang: ${currentRentang.dari} s/d ${currentRentang.sampai}`);
+            }
+        }
+
+        window.bukaModalFilter = () => document.getElementById('filterModal').style.display = "block";
+        window.tutupModalFilter = () => document.getElementById('filterModal').style.display = "none";
+        window.terapkanFilterModal = function() {
+            const dari = document.getElementById('modalDari').value;
+            const sampai = document.getElementById('modalSampai').value;
+            if (!dari || !sampai) {
+                showToast("Harap isi rentang tanggal dengan lengkap!", "error");
+                return;
+            }
+            currentFilterMode = 'rentang';
+            currentRentang = { dari, sampai };
+            refreshTampilanAktif();
+            tutupModalFilter();
+            showToast("Filter tanggal diterapkan.", "info");
+        };
+    </script>
+</body>
+</html>
