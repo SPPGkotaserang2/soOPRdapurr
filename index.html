@@ -108,6 +108,9 @@
         .toast.info { background-color: #2b6cb0; border-left: 5px solid #1a365d; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px); } }
+
+        /* Container untuk menampilkan galeri thumbnail pada tabel */
+        .foto-gallery-cell { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; }
     </style>
 </head>
 <body>
@@ -192,10 +195,10 @@
                     <input type="text" id="inputPengambilPenerima" placeholder="Nama pengambil / penerima" required>
                 </div>
 
-                <!-- Input Foto Bukti Opsional agar terhubung ke Drive & Folder Tanggal -->
+                <!-- Input Foto Bukti Opsional (Bisa Pilih Lebih dari 1 Foto) -->
                 <div class="form-group full-width">
-                    <label>Foto Bukti (Opsional)</label>
-                    <input type="file" id="fotoBukti" accept="image/*">
+                    <label>Foto Bukti</label>
+                    <input type="file" id="fotoBukti" accept="image/*" multiple>
                 </div>
 
                 <div class="form-group full-width">
@@ -230,7 +233,7 @@
         <div id="printableArea">
             <div class="report-header">
                 <h3>Rekap Data Barang Keluar Masuk Operasional Dapur</h3>
-                <h4>SPPG KOTA SERANG SERANG SERANG 2[cite: 3]</h4>
+                <h4>SPPG KOTA SERANG SERANG SERANG 2</h4>
                 <p id="labelPeriodeHeader">Periode: -</p>
             </div>
 
@@ -555,38 +558,40 @@
                 btnSimpan.disabled = true;
                 btnSimpan.innerText = "Memproses ke Sistem...";
 
-                let fileId = "";
-                let fileUrl = "";
+                let fileIds = [];
+                let fileUrls = [];
 
-                if (fileInput.files && fileInput.files[0]) {
-                    const file = fileInput.files[0];
-                    const base64Data = await toBase64(file);
-                    
-                    if (APPS_SCRIPT_URL !== "ISI_URL_WEB_APP_APPS_SCRIPT_ANDA_DI_SINI") {
-                        try {
-                            const response = await fetch(APPS_SCRIPT_URL, {
-                                method: 'POST',
-                                mode: 'cors',
-                                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                                body: JSON.stringify({
-                                    action: "upload",
-                                    tanggal: tanggal,
-                                    namaBarang: namaBarang,
-                                    fileName: file.name,
-                                    fileMimeType: file.type,
-                                    fileBase64: base64Data
-                                })
-                            });
-                            const result = await response.json();
-                            if (result.status === "success") {
-                                fileId = result.fileId;
-                                fileUrl = result.fileUrl;
+                if (fileInput.files && fileInput.files.length > 0) {
+                    for (let i = 0; i < fileInput.files.length; i++) {
+                        const file = fileInput.files[i];
+                        const base64Data = await toBase64(file);
+                        
+                        if (APPS_SCRIPT_URL !== "ISI_URL_WEB_APP_APPS_SCRIPT_ANDA_DI_SINI") {
+                            try {
+                                const response = await fetch(APPS_SCRIPT_URL, {
+                                    method: 'POST',
+                                    mode: 'cors',
+                                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                                    body: JSON.stringify({
+                                        action: "upload",
+                                        tanggal: tanggal,
+                                        namaBarang: namaBarang,
+                                        fileName: file.name,
+                                        fileMimeType: file.type,
+                                        fileBase64: base64Data
+                                    })
+                                });
+                                const result = await response.json();
+                                if (result.status === "success") {
+                                    fileIds.push(result.fileId);
+                                    fileUrls.push(result.fileUrl);
+                                }
+                            } catch (err) {
+                                console.error("Upload Sistem error:", err);
                             }
-                        } catch (err) {
-                            console.error("Upload Sistem error:", err);
+                        } else {
+                            fileUrls.push(URL.createObjectURL(file));
                         }
-                    } else {
-                        fileUrl = URL.createObjectURL(file);
                     }
                 }
 
@@ -595,9 +600,12 @@
                     const updatePayload = {
                         tanggal, hari, namaBarang, satuan, jmlKeluar, jmlMasuk, yangAmbil, yangMenerima, keterangan
                     };
-                    if (fileUrl) {
-                        updatePayload.fileUrl = fileUrl;
-                        if (fileId) updatePayload.fileId = fileId;
+                    if (fileUrls.length > 0) {
+                        updatePayload.fileUrls = fileUrls;
+                        if (fileIds.length > 0) updatePayload.fileIds = fileIds;
+                        // Backward compatibility jika sebelumnya berbentuk fileUrl tunggal
+                        updatePayload.fileUrl = fileUrls[0];
+                        if (fileIds[0]) updatePayload.fileId = fileIds[0];
                     }
 
                     await updateDoc(docRef, updatePayload);
@@ -605,9 +613,22 @@
                     batalEditMode();
                 } else {
                     const timestamp = Date.now();
-                    await addDoc(collection(db, "transaksiBarang"), {
-                        tanggal, hari, namaBarang, satuan, jmlKeluar, jmlMasuk, yangAmbil, yangMenerima, keterangan, fileId, fileUrl, timestamp
-                    });
+                    const insertPayload = {
+                        tanggal, hari, namaBarang, satuan, jmlKeluar, jmlMasuk, yangAmbil, yangMenerima, keterangan, timestamp,
+                        fileUrls: fileUrls,
+                        fileIds: fileIds
+                    };
+                    
+                    // Backward compatibility untuk sistem lama
+                    if (fileUrls.length > 0) {
+                        insertPayload.fileUrl = fileUrls[0];
+                        insertPayload.fileId = fileIds[0] || "";
+                    } else {
+                        insertPayload.fileUrl = "";
+                        insertPayload.fileId = "";
+                    }
+
+                    await addDoc(collection(db, "transaksiBarang"), insertPayload);
 
                     document.getElementById('formBarang').reset();
                     document.getElementById('tanggalInput').value = new Date().toISOString().split('T')[0];
@@ -691,14 +712,16 @@
 
             try {
                 const itemToDelete = globalDatabaseBarang.find(i => i.id === id);
-                if (itemToDelete && itemToDelete.fileId && APPS_SCRIPT_URL !== "ISI_URL_WEB_APP_APPS_SCRIPT_ANDA_DI_SINI") {
-                    // Hapus file di Google Drive jika ada fileId
-                    fetch(APPS_SCRIPT_URL, {
-                        method: 'POST',
-                        mode: 'cors',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify({ action: "delete", fileId: itemToDelete.fileId })
-                    }).catch(e => console.log("Hapus file Sistem error:", e));
+                if (itemToDelete && APPS_SCRIPT_URL !== "ISI_URL_WEB_APP_APPS_SCRIPT_ANDA_DI_SINI") {
+                    const idsToDelete = itemToDelete.fileIds || (itemToDelete.fileId ? [itemToDelete.fileId] : []);
+                    idsToDelete.forEach(fId => {
+                        fetch(APPS_SCRIPT_URL, {
+                            method: 'POST',
+                            mode: 'cors',
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body: JSON.stringify({ action: "delete", fileId: fId })
+                        }).catch(e => console.log("Hapus file Sistem error:", e));
+                    });
                 }
 
                 await deleteDoc(doc(db, "transaksiBarang", id));
@@ -792,9 +815,15 @@
 
             dataList.forEach((item, index) => {
                 const row = tabel.insertRow();
+                
+                // Penanganan multiple foto
+                let urls = item.fileUrls || (item.fileUrl ? [item.fileUrl] : []);
                 let fotoHtml = `<div style="width: 35px; height: 35px; border: 1px solid #ccc; margin: auto; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #aaa;">-</div>`;
-                if (item.fileUrl) {
-                    fotoHtml = `<img src="${item.fileUrl}" style="width: 35px; height: 35px; object-fit: cover; border-radius: 4px; cursor: pointer;" alt="Foto" onclick="bukaPratinjauGambar('${item.fileUrl}', '${item.namaBarang}')" title="Klik untuk pratinjau & unduh">`;
+                
+                if (urls.length > 0) {
+                    fotoHtml = `<div class="foto-gallery-cell">` + urls.map(u => 
+                        `<img src="${u}" style="width: 35px; height: 35px; object-fit: cover; border-radius: 4px; cursor: pointer;" alt="Foto" onclick="bukaPratinjauGambar('${u}', '${item.namaBarang}')" title="Klik untuk pratinjau & unduh">`
+                    ).join('') + `</div>`;
                 }
 
                 let aksiHtml = `
