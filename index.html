@@ -41,6 +41,11 @@
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; background-color: #fff; }
         .form-group select:focus, .form-group input:focus { border-color: #28a745; outline: none; }
         
+        /* Tambahan style untuk wrapper password dengan ikon mata */
+        .password-wrapper { position: relative; }
+        .password-wrapper input { padding-right: 40px; }
+        .toggle-password { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 16px; color: #666; padding: 0; }
+
         .btn { background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-size: 15px; font-weight: bold; transition: background 0.2s; }
         .btn:hover { background-color: #218838; }
         .btn-danger { background-color: #dc3545; width: auto; padding: 8px 15px; font-size: 13px; }
@@ -103,8 +108,6 @@
         .toast.info { background-color: #2b6cb0; border-left: 5px solid #1a365d; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px); } }
-
-        .foto-container { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; }
     </style>
 </head>
 <body>
@@ -124,7 +127,10 @@
             </div>
             <div class="form-group">
                 <label>Sandi</label>
-                <input type="password" id="password" placeholder="Masukkan Sandi">
+                <div class="password-wrapper">
+                    <input type="password" id="password" placeholder="Masukkan Sandi">
+                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility()">👁️</button>
+                </div>
             </div>
             <button class="btn" onclick="prosesLogin()">Login</button>
             <div id="login-error" class="error-msg"></div>
@@ -186,10 +192,10 @@
                     <input type="text" id="inputPengambilPenerima" placeholder="Nama pengambil / penerima" required>
                 </div>
 
-                <!-- Input Foto Bukti DIUBAH: Dibuat Wajib (required) & BISA LEBIH DARI 1 (multiple) -->
+                <!-- Input Foto Bukti Opsional agar terhubung ke Drive & Folder Tanggal -->
                 <div class="form-group full-width">
-                    <label>Foto Bukti * (Wajib pilih 1 atau lebih foto)</label>
-                    <input type="file" id="fotoBukti" accept="image/*" multiple required>
+                    <label>Foto Bukti (Opsional)</label>
+                    <input type="file" id="fotoBukti" accept="image/*">
                 </div>
 
                 <div class="form-group full-width">
@@ -224,7 +230,7 @@
         <div id="printableArea">
             <div class="report-header">
                 <h3>Rekap Data Barang Keluar Masuk Operasional Dapur</h3>
-                <h4>SPPG KOTA SERANG SERANG SERANG 2</h4>
+                <h4>SPPG KOTA SERANG SERANG SERANG 2[cite: 3]</h4>
                 <p id="labelPeriodeHeader">Periode: -</p>
             </div>
 
@@ -280,6 +286,20 @@
                 <button type="button" class="btn" style="background-color: #6c757d;" onclick="tutupKonfirmasiHapus()">Batal</button>
                 <button type="button" class="btn" style="background-color: #dc3545;" id="btnKonfirmasiHapusYa">Ya, Hapus</button>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL PRATINJAU GAMBAR -->
+    <div id="imageModal" class="modal">
+        <div class="modal-filter-box" style="max-width: 500px; text-align: center;">
+            <div class="modal-filter-header">
+                <h3>Pratinjau Foto Bukti</h3>
+                <span class="close-filter" onclick="tutupModalGambar()">&times;</span>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <img id="previewImageElement" src="" alt="Foto Bukti" style="max-width: 100%; max-height: 400px; object-fit: contain; border-radius: 4px; border: 1px solid #ddd;">
+            </div>
+            <button id="btnUnduhGambar" type="button" class="btn" style="background-color: #17a2b8;">Unduh Gambar</button>
         </div>
     </div>
 
@@ -342,6 +362,15 @@
             }
         }
 
+        window.togglePasswordVisibility = function() {
+            const pwdInput = document.getElementById('password');
+            if (pwdInput.type === 'password') {
+                pwdInput.type = 'text';
+            } else {
+                pwdInput.type = 'password';
+            }
+        };
+
         window.onload = function() {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('tanggalInput').value = today;
@@ -353,9 +382,18 @@
             setInterval(updateLiveClock, 1000);
             handleJumlahChange();
 
-            if (localStorage.getItem('isLoggedIn') === 'true') {
+            const loginStatus = localStorage.getItem('isLoggedIn');
+            if (loginStatus === 'true' || loginStatus === 'guest') {
                 document.getElementById('login-section-wrapper').style.display = 'none';
                 document.getElementById('dashboard-section').style.display = 'block';
+                
+                if (loginStatus === 'guest') {
+                    // Mode Tamu (Kode 1): Sembunyikan form input dan kolom/aksi sensitif
+                    const formEl = document.getElementById('formBarang');
+                    if (formEl) formEl.style.display = 'none';
+                    document.getElementById('formTitle').innerText = "Rekap Data Stok & Barang (Mode Tamu)";
+                }
+
                 inisialisasiDashboard();
             }
         };
@@ -436,16 +474,27 @@
         };
 
         window.prosesLogin = function() {
-            const user = document.getElementById('username').value;
-            const pass = document.getElementById('password').value;
-            if (user === 'Serang' && pass === 'Mandiri02srg') {
+            const user = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value.trim();
+
+            if (pass === '1' || user === '1') {
+                // Masuk sebagai tamu untuk melihat data stok per tanggal
+                localStorage.setItem('isLoggedIn', 'guest');
+                document.getElementById('login-section-wrapper').style.display = 'none';
+                document.getElementById('dashboard-section').style.display = 'block';
+                const formEl = document.getElementById('formBarang');
+                if (formEl) formEl.style.display = 'none';
+                document.getElementById('formTitle').innerText = "Rekap Data Stok & Barang (Mode Tamu)";
+                inisialisasiDashboard();
+                showToast("Masuk ke Mode Lihat Stok Berhasil.", "info");
+            } else if (user === 'Serang' && pass === 'Mandiri02srg') {
                 localStorage.setItem('isLoggedIn', 'true');
                 document.getElementById('login-section-wrapper').style.display = 'none';
                 document.getElementById('dashboard-section').style.display = 'block';
                 inisialisasiDashboard();
                 showToast("Login Berhasil! Selamat datang.", "success");
             } else {
-                document.getElementById('login-error').innerText = 'Username atau Sandi salah!';
+                document.getElementById('login-error').innerText = 'Username atau Sandi salah! (Ketik 1 untuk lihat stok)';
             }
         };
 
@@ -502,50 +551,42 @@
             const keterangan = document.getElementById('keterangan').value.trim() || '-';
             const fileInput = document.getElementById('fotoBukti');
 
-            // Validasi Wajib Pilih Foto
-            if (!editId && (!fileInput.files || fileInput.files.length === 0)) {
-                showToast("Foto bukti wajib diunggah!", "error");
-                return;
-            }
-
             try {
                 btnSimpan.disabled = true;
                 btnSimpan.innerText = "Memproses ke Sistem...";
 
-                let fileIds = [];
-                let fileUrls = [];
+                let fileId = "";
+                let fileUrl = "";
 
-                if (fileInput.files && fileInput.files.length > 0) {
-                    for (let i = 0; i < fileInput.files.length; i++) {
-                        const file = fileInput.files[i];
-                        const base64Data = await toBase64(file);
-                        
-                        if (APPS_SCRIPT_URL !== "ISI_URL_WEB_APP_APPS_SCRIPT_ANDA_DI_SINI") {
-                            try {
-                                const response = await fetch(APPS_SCRIPT_URL, {
-                                    method: 'POST',
-                                    mode: 'cors',
-                                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                                    body: JSON.stringify({
-                                        action: "upload",
-                                        tanggal: tanggal,
-                                        namaBarang: namaBarang,
-                                        fileName: file.name,
-                                        fileMimeType: file.type,
-                                        fileBase64: base64Data
-                                    })
-                                });
-                                const result = await response.json();
-                                if (result.status === "success") {
-                                    fileIds.push(result.fileId);
-                                    fileUrls.push(result.fileUrl);
-                                }
-                            } catch (err) {
-                                console.error("Upload Sistem error:", err);
+                if (fileInput.files && fileInput.files[0]) {
+                    const file = fileInput.files[0];
+                    const base64Data = await toBase64(file);
+                    
+                    if (APPS_SCRIPT_URL !== "ISI_URL_WEB_APP_APPS_SCRIPT_ANDA_DI_SINI") {
+                        try {
+                            const response = await fetch(APPS_SCRIPT_URL, {
+                                method: 'POST',
+                                mode: 'cors',
+                                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                                body: JSON.stringify({
+                                    action: "upload",
+                                    tanggal: tanggal,
+                                    namaBarang: namaBarang,
+                                    fileName: file.name,
+                                    fileMimeType: file.type,
+                                    fileBase64: base64Data
+                                })
+                            });
+                            const result = await response.json();
+                            if (result.status === "success") {
+                                fileId = result.fileId;
+                                fileUrl = result.fileUrl;
                             }
-                        } else {
-                            fileUrls.push(URL.createObjectURL(file));
+                        } catch (err) {
+                            console.error("Upload Sistem error:", err);
                         }
+                    } else {
+                        fileUrl = URL.createObjectURL(file);
                     }
                 }
 
@@ -554,13 +595,9 @@
                     const updatePayload = {
                         tanggal, hari, namaBarang, satuan, jmlKeluar, jmlMasuk, yangAmbil, yangMenerima, keterangan
                     };
-                    if (fileUrls.length > 0) {
-                        updatePayload.fileUrls = fileUrls;
-                        updatePayload.fileUrl = fileUrls[0]; // Kompatibilitas dengan versi sebelumnya
-                        if (fileIds.length > 0) {
-                            updatePayload.fileIds = fileIds;
-                            updatePayload.fileId = fileIds[0];
-                        }
+                    if (fileUrl) {
+                        updatePayload.fileUrl = fileUrl;
+                        if (fileId) updatePayload.fileId = fileId;
                     }
 
                     await updateDoc(docRef, updatePayload);
@@ -569,13 +606,11 @@
                 } else {
                     const timestamp = Date.now();
                     await addDoc(collection(db, "transaksiBarang"), {
-                        tanggal, hari, namaBarang, satuan, jmlKeluar, jmlMasuk, yangAmbil, yangMenerima, keterangan,
-                        fileIds, fileUrls, fileId: fileIds[0] || "", fileUrl: fileUrls[0] || "", timestamp
+                        tanggal, hari, namaBarang, satuan, jmlKeluar, jmlMasuk, yangAmbil, yangMenerima, keterangan, fileId, fileUrl, timestamp
                     });
 
                     document.getElementById('formBarang').reset();
                     document.getElementById('tanggalInput').value = new Date().toISOString().split('T')[0];
-                    document.getElementById('fotoBukti').required = true;
                     currentFilterMode = 'hariIni';
                     currentRentang = { dari: document.getElementById('tanggalInput').value, sampai: document.getElementById('tanggalInput').value };
                     handleJumlahChange();
@@ -619,7 +654,6 @@
             }
 
             document.getElementById('keterangan').value = item.keterangan;
-            document.getElementById('fotoBukti').required = false; // Boleh opsional saat edit data saja
             handleJumlahChange();
 
             document.getElementById('formTitle').innerText = "Edit Data Barang Keluar Masuk";
@@ -634,7 +668,6 @@
             document.getElementById('formBarang').reset();
             document.getElementById('editId').value = "";
             document.getElementById('tanggalInput').value = new Date().toISOString().split('T')[0];
-            document.getElementById('fotoBukti').required = true;
             document.getElementById('formTitle').innerText = "Form Input Barang Keluar Masuk";
             document.getElementById('btnSimpan').innerText = "Simpan Data";
             document.getElementById('btnBatalEdit').style.display = "none";
@@ -658,16 +691,14 @@
 
             try {
                 const itemToDelete = globalDatabaseBarang.find(i => i.id === id);
-                if (itemToDelete && APPS_SCRIPT_URL !== "ISI_URL_WEB_APP_APPS_SCRIPT_ANDA_DI_SINI") {
-                    const idsToDelete = itemToDelete.fileIds || (itemToDelete.fileId ? [itemToDelete.fileId] : []);
-                    idsToDelete.forEach(fId => {
-                        fetch(APPS_SCRIPT_URL, {
-                            method: 'POST',
-                            mode: 'cors',
-                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                            body: JSON.stringify({ action: "delete", fileId: fId })
-                        }).catch(e => console.log("Hapus file Sistem error:", e));
-                    });
+                if (itemToDelete && itemToDelete.fileId && APPS_SCRIPT_URL !== "ISI_URL_WEB_APP_APPS_SCRIPT_ANDA_DI_SINI") {
+                    // Hapus file di Google Drive jika ada fileId
+                    fetch(APPS_SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'cors',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: "delete", fileId: itemToDelete.fileId })
+                    }).catch(e => console.log("Hapus file Sistem error:", e));
                 }
 
                 await deleteDoc(doc(db, "transaksiBarang", id));
@@ -676,6 +707,49 @@
                 console.error(error);
                 showToast("Gagal menghapus data: " + error.message, "error");
             }
+        };
+
+        // Fungsi Pratinjau Gambar & Unduh langsung tersimpan ke lokal
+        window.bukaPratinjauGambar = function(url, namaBarang) {
+            const modal = document.getElementById('imageModal');
+            const imgEl = document.getElementById('previewImageElement');
+            const btnUnduh = document.getElementById('btnUnduhGambar');
+
+            imgEl.src = url;
+            modal.style.display = 'block';
+
+            // Ganti fungsi klik unduh agar langsung tersimpan lokal sebagai blob
+            btnUnduh.onclick = async function() {
+                try {
+                    showToast("Sedang mengunduh gambar...", "info");
+                    const response = await fetch(url, { mode: 'cors' });
+                    const blob = await response.blob();
+                    const blobUrl = window.URL.createObjectURL(blob);
+                    
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = blobUrl;
+                    a.download = `Bukti_${namaBarang ? namaBarang.replace(/\s+/g, '_') : 'Barang'}.jpg`;
+                    document.body.appendChild(a);
+                    a.click();
+                    
+                    window.URL.revokeObjectURL(blobUrl);
+                    a.remove();
+                    showToast("Gambar berhasil diunduh!", "success");
+                } catch (err) {
+                    console.error("Gagal unduh langsung:", err);
+                    // Fallback alternatif jika CORS melarang fetch
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.target = '_blank';
+                    a.download = `Bukti_${namaBarang ? namaBarang.replace(/\s+/g, '_') : 'Barang'}.jpg`;
+                    a.click();
+                }
+            };
+        };
+
+        window.tutupModalGambar = function() {
+            document.getElementById('imageModal').style.display = 'none';
         };
 
         function getProcessedDataWithStock() {
@@ -698,6 +772,7 @@
 
         function renderTabel(dataList, subtitleInfo) {
             const tabel = document.getElementById('tabelData');
+            const isGuest = localStorage.getItem('isLoggedIn') === 'guest';
 
             document.getElementById('judulTabel').innerText = `Rekap Data Barang Keluar Masuk (${subtitleInfo})`;
             
@@ -717,14 +792,17 @@
 
             dataList.forEach((item, index) => {
                 const row = tabel.insertRow();
-                
-                let urls = item.fileUrls || (item.fileUrl ? [item.fileUrl] : []);
                 let fotoHtml = `<div style="width: 35px; height: 35px; border: 1px solid #ccc; margin: auto; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #aaa;">-</div>`;
-                
-                if (urls.length > 0) {
-                    fotoHtml = `<div class="foto-container">` + 
-                        urls.map(u => `<a href="${u}" target="_blank"><img src="${u}" style="width: 35px; height: 35px; object-fit: cover; border-radius: 4px;" alt="Foto"></a>`).join('') + 
-                        `</div>`;
+                if (item.fileUrl) {
+                    fotoHtml = `<img src="${item.fileUrl}" style="width: 35px; height: 35px; object-fit: cover; border-radius: 4px; cursor: pointer;" alt="Foto" onclick="bukaPratinjauGambar('${item.fileUrl}', '${item.namaBarang}')" title="Klik untuk pratinjau & unduh">`;
+                }
+
+                let aksiHtml = `
+                    <button class="btn-warning" onclick="mulaiEditData('${item.id}')">Edit</button>
+                    <button class="btn-del-table" onclick="hapusData('${item.id}')">Hapus</button>
+                `;
+                if (isGuest) {
+                    aksiHtml = `<span style="color: #888; font-size: 12px;">Tamu (Read-only)</span>`;
                 }
 
                 row.innerHTML = `
@@ -740,10 +818,7 @@
                     <td><strong>${item.sisaStok}</strong></td>
                     <td>${item.keterangan}</td>
                     <td class="col-foto-bukti">${fotoHtml}</td>
-                    <td class="no-print">
-                        <button class="btn-warning" onclick="mulaiEditData('${item.id}')">Edit</button>
-                        <button class="btn-del-table" onclick="hapusData('${item.id}')">Hapus</button>
-                    </td>
+                    <td class="no-print">${aksiHtml}</td>
                 `;
             });
         }
