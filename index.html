@@ -354,6 +354,14 @@
             qIdx = (qIdx + 1) % quotes.length;
         }
 
+        function getTodayString() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
         function updateLiveClock() {
             const now = new Date();
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -362,6 +370,15 @@
             const el = document.getElementById('widgetHariTanggal');
             if (el) {
                 el.innerText = `📅 ${tanggalStr} - ${jamStr}`;
+            }
+
+            // Memastikan tanggal input tetap otomatis mengikuti tanggal live saat ini
+            const todayStr = getTodayString();
+            const inputTgl = document.getElementById('tanggalInput');
+            if (inputTgl && !document.getElementById('editId').value) {
+                if (inputTgl.value !== todayStr) {
+                    inputTgl.value = todayStr;
+                }
             }
         }
 
@@ -375,7 +392,7 @@
         };
 
         window.onload = function() {
-            const today = new Date().toISOString().split('T')[0];
+            const today = getTodayString();
             document.getElementById('tanggalInput').value = today;
             document.getElementById('modalDari').value = today;
             document.getElementById('modalSampai').value = today;
@@ -631,9 +648,10 @@
                     await addDoc(collection(db, "transaksiBarang"), insertPayload);
 
                     document.getElementById('formBarang').reset();
-                    document.getElementById('tanggalInput').value = new Date().toISOString().split('T')[0];
+                    const todayLive = getTodayString();
+                    document.getElementById('tanggalInput').value = todayLive;
                     currentFilterMode = 'hariIni';
-                    currentRentang = { dari: document.getElementById('tanggalInput').value, sampai: document.getElementById('tanggalInput').value };
+                    currentRentang = { dari: todayLive, sampai: todayLive };
                     handleJumlahChange();
                     showToast("Data berhasil disimpan Ke Sistem!", "success");
                 }
@@ -688,7 +706,7 @@
         window.batalEditMode = function() {
             document.getElementById('formBarang').reset();
             document.getElementById('editId').value = "";
-            document.getElementById('tanggalInput').value = new Date().toISOString().split('T')[0];
+            document.getElementById('tanggalInput').value = getTodayString();
             document.getElementById('formTitle').innerText = "Form Input Barang Keluar Masuk";
             document.getElementById('btnSimpan').innerText = "Simpan Data";
             document.getElementById('btnBatalEdit').style.display = "none";
@@ -801,7 +819,7 @@
             
             let textPeriode = `Periode: ${formatDateID(currentRentang.dari)} s/d ${formatDateID(currentRentang.sampai)}`;
             if (currentFilterMode === 'hariIni') {
-                const today = new Date().toISOString().split('T')[0];
+                const today = getTodayString();
                 textPeriode = `Periode: ${formatDateID(today)} s/d ${formatDateID(today)}`;
             }
             document.getElementById('labelPeriodeHeader').innerText = textPeriode;
@@ -855,7 +873,7 @@
         function refreshTampilanAktif() {
             const processed = getProcessedDataWithStock();
             if (currentFilterMode === 'hariIni') {
-                const today = new Date().toISOString().split('T')[0];
+                const today = getTodayString();
                 currentRentang = { dari: today, sampai: today };
                 renderTabel(processed.filter(i => i.tanggal === today), `Hari Ini: ${formatDateID(today)}`);
             } else if (currentFilterMode === 'rentang') {
@@ -883,7 +901,7 @@
             const processed = getProcessedDataWithStock();
             let rawData = [];
             if (currentFilterMode === 'hariIni') {
-                const today = new Date().toISOString().split('T')[0];
+                const today = getTodayString();
                 rawData = processed.filter(i => i.tanggal === today);
             } else if (currentFilterMode === 'rentang') {
                 rawData = processed.filter(i => i.tanggal >= currentRentang.dari && i.tanggal <= currentRentang.sampai);
@@ -898,7 +916,7 @@
 
             let textPeriodeExport = `Periode: ${formatDateID(currentRentang.dari)} s/d ${formatDateID(currentRentang.sampai)}`;
             if (currentFilterMode === 'hariIni') {
-                const today = new Date().toISOString().split('T')[0];
+                const today = getTodayString();
                 textPeriodeExport = `Periode: ${formatDateID(today)} s/d ${formatDateID(today)}`;
             }
 
