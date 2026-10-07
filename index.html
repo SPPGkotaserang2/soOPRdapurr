@@ -371,15 +371,6 @@
             if (el) {
                 el.innerText = `📅 ${tanggalStr} - ${jamStr}`;
             }
-
-            // Memastikan tanggal input tetap otomatis mengikuti tanggal live saat ini
-            const todayStr = getTodayString();
-            const inputTgl = document.getElementById('tanggalInput');
-            if (inputTgl && !document.getElementById('editId').value) {
-                if (inputTgl.value !== todayStr) {
-                    inputTgl.value = todayStr;
-                }
-            }
         }
 
         window.togglePasswordVisibility = function() {
@@ -408,7 +399,7 @@
                 document.getElementById('dashboard-section').style.display = 'block';
                 
                 if (loginStatus === 'guest') {
-                    // Mode Tamu (Kode 1): Sembunyikan form input dan kolom/aksi sensitif
+                    // Mode Tamu: Sembunyikan form input dan kolom/aksi sensitif
                     const formEl = document.getElementById('formBarang');
                     if (formEl) formEl.style.display = 'none';
                     document.getElementById('formTitle').innerText = "Rekap Data Stok & Barang (Mode Tamu)";
@@ -620,7 +611,6 @@
                     if (fileUrls.length > 0) {
                         updatePayload.fileUrls = fileUrls;
                         if (fileIds.length > 0) updatePayload.fileIds = fileIds;
-                        // Backward compatibility jika sebelumnya berbentuk fileUrl tunggal
                         updatePayload.fileUrl = fileUrls[0];
                         if (fileIds[0]) updatePayload.fileId = fileIds[0];
                     }
@@ -636,7 +626,6 @@
                         fileIds: fileIds
                     };
                     
-                    // Backward compatibility untuk sistem lama
                     if (fileUrls.length > 0) {
                         insertPayload.fileUrl = fileUrls[0];
                         insertPayload.fileId = fileIds[0] || "";
@@ -648,10 +637,7 @@
                     await addDoc(collection(db, "transaksiBarang"), insertPayload);
 
                     document.getElementById('formBarang').reset();
-                    const todayLive = getTodayString();
-                    document.getElementById('tanggalInput').value = todayLive;
-                    currentFilterMode = 'hariIni';
-                    currentRentang = { dari: todayLive, sampai: todayLive };
+                    document.getElementById('tanggalInput').value = getTodayString();
                     handleJumlahChange();
                     showToast("Data berhasil disimpan Ke Sistem!", "success");
                 }
@@ -750,7 +736,6 @@
             }
         };
 
-        // Fungsi Pratinjau Gambar & Unduh langsung tersimpan ke lokal
         window.bukaPratinjauGambar = function(url, namaBarang) {
             const modal = document.getElementById('imageModal');
             const imgEl = document.getElementById('previewImageElement');
@@ -759,7 +744,6 @@
             imgEl.src = url;
             modal.style.display = 'block';
 
-            // Ganti fungsi klik unduh agar langsung tersimpan lokal sebagai blob
             btnUnduh.onclick = async function() {
                 try {
                     showToast("Sedang mengunduh gambar...", "info");
@@ -779,7 +763,6 @@
                     showToast("Gambar berhasil diunduh!", "success");
                 } catch (err) {
                     console.error("Gagal unduh langsung:", err);
-                    // Fallback alternatif jika CORS melarang fetch
                     const a = document.createElement('a');
                     a.href = url;
                     a.target = '_blank';
@@ -834,7 +817,6 @@
             dataList.forEach((item, index) => {
                 const row = tabel.insertRow();
                 
-                // Penanganan multiple foto
                 let urls = item.fileUrls || (item.fileUrl ? [item.fileUrl] : []);
                 let fotoHtml = `<div style="width: 35px; height: 35px; border: 1px solid #ccc; margin: auto; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #aaa;">-</div>`;
                 
