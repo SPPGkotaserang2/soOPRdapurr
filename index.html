@@ -108,9 +108,6 @@
         .toast.info { background-color: #2b6cb0; border-left: 5px solid #1a365d; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px); } }
-
-        /* Container untuk menampilkan galeri thumbnail pada tabel */
-        .foto-gallery-cell { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; }
     </style>
 </head>
 <body>
@@ -251,7 +248,6 @@
                         <th>Yang Menerima</th>
                         <th>Sisa</th>
                         <th>Keterangan</th>
-                        <th class="col-foto-bukti">Foto Bukti</th>
                         <th class="no-print">Aksi</th>
                     </tr>
                 </thead>
@@ -292,20 +288,6 @@
         </div>
     </div>
 
-    <!-- MODAL PRATINJAU GAMBAR -->
-    <div id="imageModal" class="modal">
-        <div class="modal-filter-box" style="max-width: 500px; text-align: center;">
-            <div class="modal-filter-header">
-                <h3>Pratinjau Foto Bukti</h3>
-                <span class="close-filter" onclick="tutupModalGambar()">&times;</span>
-            </div>
-            <div style="margin-bottom: 20px;">
-                <img id="previewImageElement" src="" alt="Foto Bukti" style="max-width: 100%; max-height: 400px; object-fit: contain; border-radius: 4px; border: 1px solid #ddd;">
-            </div>
-            <button id="btnUnduhGambar" type="button" class="btn" style="background-color: #17a2b8;">Unduh Gambar</button>
-        </div>
-    </div>
-
     <!-- SCRIPT UTAMA -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -322,7 +304,6 @@
             measurementId: "G-L9DZGM131J"
         };
 
-        // Masukkan URL Web App Google Apps Script Anda di sini setelah di-deploy:
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIamD19NDC0h1EZ6ESMBuRwqQewD59i2-GQ7cgCCmM4ngKj6xSSyIpPPZBMHB2uUcQ/exec";
 
         const app = initializeApp(firebaseConfig);
@@ -399,7 +380,6 @@
                 document.getElementById('dashboard-section').style.display = 'block';
                 
                 if (loginStatus === 'guest') {
-                    // Mode Tamu: Sembunyikan form input dan kolom/aksi sensitif
                     const formEl = document.getElementById('formBarang');
                     if (formEl) formEl.style.display = 'none';
                     document.getElementById('formTitle').innerText = "Rekap Data Stok & Barang (Mode Tamu)";
@@ -489,7 +469,6 @@
             const pass = document.getElementById('password').value.trim();
 
             if (pass === '1' || user === '1') {
-                // Masuk sebagai tamu untuk melihat data stok per tanggal
                 localStorage.setItem('isLoggedIn', 'guest');
                 document.getElementById('login-section-wrapper').style.display = 'none';
                 document.getElementById('dashboard-section').style.display = 'block';
@@ -736,46 +715,6 @@
             }
         };
 
-        window.bukaPratinjauGambar = function(url, namaBarang) {
-            const modal = document.getElementById('imageModal');
-            const imgEl = document.getElementById('previewImageElement');
-            const btnUnduh = document.getElementById('btnUnduhGambar');
-
-            imgEl.src = url;
-            modal.style.display = 'block';
-
-            btnUnduh.onclick = async function() {
-                try {
-                    showToast("Sedang mengunduh gambar...", "info");
-                    const response = await fetch(url, { mode: 'cors' });
-                    const blob = await response.blob();
-                    const blobUrl = window.URL.createObjectURL(blob);
-                    
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = blobUrl;
-                    a.download = `Bukti_${namaBarang ? namaBarang.replace(/\s+/g, '_') : 'Barang'}.jpg`;
-                    document.body.appendChild(a);
-                    a.click();
-                    
-                    window.URL.revokeObjectURL(blobUrl);
-                    a.remove();
-                    showToast("Gambar berhasil diunduh!", "success");
-                } catch (err) {
-                    console.error("Gagal unduh langsung:", err);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.target = '_blank';
-                    a.download = `Bukti_${namaBarang ? namaBarang.replace(/\s+/g, '_') : 'Barang'}.jpg`;
-                    a.click();
-                }
-            };
-        };
-
-        window.tutupModalGambar = function() {
-            document.getElementById('imageModal').style.display = 'none';
-        };
-
         function getProcessedDataWithStock() {
             let runningStock = {};
             return globalDatabaseBarang.map(item => {
@@ -810,21 +749,12 @@
             tabel.innerHTML = '';
 
             if (dataList.length === 0) {
-                tabel.innerHTML = `<tr><td colspan="13" style="padding: 20px; color: #777;">Tidak ada data untuk periode ini.</td></tr>`;
+                tabel.innerHTML = `<tr><td colspan="12" style="padding: 20px; color: #777;">Tidak ada data untuk periode ini.</td></tr>`;
                 return;
             }
 
             dataList.forEach((item, index) => {
                 const row = tabel.insertRow();
-                
-                let urls = item.fileUrls || (item.fileUrl ? [item.fileUrl] : []);
-                let fotoHtml = `<div style="width: 35px; height: 35px; border: 1px solid #ccc; margin: auto; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #aaa;">-</div>`;
-                
-                if (urls.length > 0) {
-                    fotoHtml = `<div class="foto-gallery-cell">` + urls.map(u => 
-                        `<img src="${u}" style="width: 35px; height: 35px; object-fit: cover; border-radius: 4px; cursor: pointer;" alt="Foto" onclick="bukaPratinjauGambar('${u}', '${item.namaBarang}')" title="Klik untuk pratinjau & unduh">`
-                    ).join('') + `</div>`;
-                }
 
                 let aksiHtml = `
                     <button class="btn-warning" onclick="mulaiEditData('${item.id}')">Edit</button>
@@ -846,7 +776,6 @@
                     <td>${item.yangMenerima || '-'}</td>
                     <td><strong>${item.sisaStok}</strong></td>
                     <td>${item.keterangan}</td>
-                    <td class="col-foto-bukti">${fotoHtml}</td>
                     <td class="no-print">${aksiHtml}</td>
                 `;
             });
@@ -968,7 +897,7 @@
                 showToast("Export ke PDF berhasil!", "success");
             } 
             else if (format === 'png') {
-                const hiddenElements = document.querySelectorAll('.no-print, .col-foto-bukti');
+                const hiddenElements = document.querySelectorAll('.no-print');
                 hiddenElements.forEach(el => el.style.display = 'none');
 
                 const targetArea = document.getElementById('printableArea');
