@@ -101,6 +101,19 @@
         .close-filter { font-size: 24px; font-weight: bold; cursor: pointer; color: #aaa; }
         .close-filter:hover { color: #000; }
 
+        /* Style untuk Foto di Tabel */
+        .table-img-container { display: flex; gap: 5px; justify-content: center; align-items: center; flex-wrap: wrap; }
+        .table-thumb { width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; cursor: pointer; transition: transform 0.2s; }
+        .table-thumb:hover { transform: scale(1.1); }
+
+        /* Modal Preview Gambar Besar */
+        #imgModal { display: none; position: fixed; z-index: 2000; padding-top: 40px; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.9); text-align: center; }
+        .modal-img-container-inner { display: inline-block; position: relative; max-width: 90%; }
+        .modal-img-content { max-width: 100%; max-height: 75vh; display: block; border-radius: 6px; margin: auto; }
+        .close-img-modal { position: absolute; top: -30px; right: 0; color: #f1f1f1; font-size: 35px; font-weight: bold; cursor: pointer; }
+        .btn-modal-download { display: inline-block; margin-top: 15px; background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 14px; }
+        .btn-modal-download:hover { background-color: #218838; }
+
         #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
         .toast { min-width: 280px; max-width: 380px; padding: 14px 18px; border-radius: 6px; color: #fff; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: space-between; animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s forwards; }
         .toast.success { background-color: #2f855a; border-left: 5px solid #22543d; }
@@ -247,6 +260,7 @@
                         <th>Yang Ambil</th>
                         <th>Yang Menerima</th>
                         <th>Sisa</th>
+                        <th class="no-png">Bukti Foto</th>
                         <th>Keterangan</th>
                         <th class="no-print">Aksi</th>
                     </tr>
@@ -284,6 +298,17 @@
             <div style="display: flex; gap: 10px;">
                 <button type="button" class="btn" style="background-color: #6c757d;" onclick="tutupKonfirmasiHapus()">Batal</button>
                 <button type="button" class="btn" style="background-color: #dc3545;" id="btnKonfirmasiHapusYa">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PREVIEW GAMBAR BESAR DENGAN TOMBOL UNDUH -->
+    <div id="imgModal" class="modal">
+        <div class="modal-img-container-inner">
+            <span class="close-img-modal" onclick="tutupModalGambar()">&times;</span>
+            <img class="modal-img-content" id="img01">
+            <div style="text-align: center;">
+                <a id="downloadBtnModal" class="btn-modal-download" href="#" download="Bukti_Foto.jpg" target="_blank">📥 Unduh Foto</a>
             </div>
         </div>
     </div>
@@ -361,6 +386,21 @@
             } else {
                 pwdInput.type = 'password';
             }
+        };
+
+        window.bukaModalGambar = function(url, namaBarang) {
+            const modal = document.getElementById('imgModal');
+            const modalImg = document.getElementById('img01');
+            const downloadBtn = document.getElementById('downloadBtnModal');
+            
+            modal.style.display = "block";
+            modalImg.src = url;
+            downloadBtn.href = url;
+            downloadBtn.download = `Bukti_${namaBarang || 'Foto'}.jpg`;
+        };
+
+        window.tutupModalGambar = function() {
+            document.getElementById('imgModal').style.display = "none";
         };
 
         window.onload = function() {
@@ -749,12 +789,30 @@
             tabel.innerHTML = '';
 
             if (dataList.length === 0) {
-                tabel.innerHTML = `<tr><td colspan="12" style="padding: 20px; color: #777;">Tidak ada data untuk periode ini.</td></tr>`;
+                tabel.innerHTML = `<tr><td colspan="13" style="padding: 20px; color: #777;">Tidak ada data untuk periode ini.</td></tr>`;
                 return;
             }
 
             dataList.forEach((item, index) => {
                 const row = tabel.insertRow();
+
+                // Render thumbnail foto bukti jika ada (menggunakan class no-png agar tersembunyi saat export png)
+                let fotoHtml = '-';
+                let listUrls = [];
+                if (item.fileUrls && item.fileUrls.length > 0) {
+                    listUrls = item.fileUrls;
+                } else if (item.fileUrl) {
+                    listUrls = [item.fileUrl];
+                }
+
+                if (listUrls.length > 0) {
+                    fotoHtml = `<div class="table-img-container">`;
+                    listUrls.forEach(url => {
+                        const safeBarangName = (item.namaBarang || 'Barang').replace(/[^a-zA-Z0-9]/g, '_');
+                        fotoHtml += `<img src="${url}" class="table-thumb" onclick="bukaModalGambar('${url}', '${safeBarangName}')" title="Klik untuk memperbesar & unduh">`;
+                    });
+                    fotoHtml += `</div>`;
+                }
 
                 let aksiHtml = `
                     <button class="btn-warning" onclick="mulaiEditData('${item.id}')">Edit</button>
@@ -775,6 +833,7 @@
                     <td>${item.yangAmbil || '-'}</td>
                     <td>${item.yangMenerima || '-'}</td>
                     <td><strong>${item.sisaStok}</strong></td>
+                    <td class="no-png">${fotoHtml}</td>
                     <td>${item.keterangan}</td>
                     <td class="no-print">${aksiHtml}</td>
                 `;
@@ -897,7 +956,7 @@
                 showToast("Export ke PDF berhasil!", "success");
             } 
             else if (format === 'png') {
-                const hiddenElements = document.querySelectorAll('.no-print');
+                const hiddenElements = document.querySelectorAll('.no-print, .no-png');
                 hiddenElements.forEach(el => el.style.display = 'none');
 
                 const targetArea = document.getElementById('printableArea');
